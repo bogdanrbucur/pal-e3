@@ -1,0 +1,19 @@
+{
+  "name": "pal-e3",
+  "version": "1.0.0",
+  "description": "Package containing methods for interacting with MariApps PAL e3 ERP via REST API.",
+  "main": "pal.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bogdanrbucur/pal-e3.git"
+  },
+  "author": "Bogdan Bucur",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bogdanrbucur/pal-e3/issues"
+  },
+  "homepage": "https://github.com/bogdanrbucur/pal-e3#readme"
+}
