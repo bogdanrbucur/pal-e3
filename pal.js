@@ -323,6 +323,10 @@ export default class PAL {
 		return vesselsIds;
 	}
 
+  	/**
+	 * Gets all the vessels in PAL
+	 * @return {Promise<Array>} Array of objects, each containing a Purchase category
+	 */
   async getPurchaseCategories() {
 		console.log("Start POST request for Purchase categories...");
 		console.time("Purchase categories POST request");
@@ -351,5 +355,21 @@ export default class PAL {
 		console.log(`${response.data.Total} Purchase categories received`);
 		console.timeEnd("Purchase categories POST request");
 		return response.data;
+	}
+
+  	/**
+	 * Transforms an array of Purchase categories names to a string of IDs to be used in other methods
+	 * @param {array} myVessels Array of vessel names: ["MEDICINE", "PROVISIONS"]
+	 * @return {Promise<string>} List of Ids as string: "201205,201184"
+	 */
+  async categoriesNamesToIds(categoriesArray) {
+		let categories = await this.getPurchaseCategories();
+		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text));
+		let categoriesString = "";
+		filteredCategories.forEach((cat) => {
+			categoriesString += cat.Text += ",";
+		});
+		categoriesString = categoriesString.slice(0, -1);
+		return categoriesString;
 	}
 }
