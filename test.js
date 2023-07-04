@@ -9,6 +9,7 @@ pal.password = "";
 const main = async () => {
 	await pal.getCookie();
   let schedule = await pal.getVesselSchedule();
+  let prc = await pal.generalQuery()
 	console.log(schedule);
 };
 

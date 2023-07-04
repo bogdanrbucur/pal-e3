@@ -108,9 +108,11 @@ export default class PAL {
 
   	/**
 	 * Gets PAL Purchase documents from General Query 
-	 * @return {Promise<Array>} Array of objects, each containing a Purchase document
    * @param {string} categories List of PRC categories in format 9380,9383,9384 etc
-   * @param {number} docType 
+   * @param {number} docType Requisition: 1, PO: 4
+   * @param {string} vessels List of Vessel IDs in format 246049,246026,etc.
+   * @param {number} year 
+	 * @return {Promise<Array>} Array of objects, each containing a Purchase document
 	 */
   async generalQuery (vessels, year, docType, categories) {
     console.log("Start General Query POST request...");
