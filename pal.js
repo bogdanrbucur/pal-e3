@@ -352,7 +352,6 @@ export default class PAL {
 
 		let response = await axios.request(options);
 		console.log("Got POST response for Purchase categories");
-		console.log(`${response.data.Total} Purchase categories received`);
 		console.timeEnd("Purchase categories POST request");
 		return response.data;
 	}
@@ -367,7 +366,7 @@ export default class PAL {
 		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text));
 		let categoriesString = "";
 		filteredCategories.forEach((cat) => {
-			categoriesString += cat.Text += ",";
+			categoriesString += cat.Value += ",";
 		});
 		categoriesString = categoriesString.slice(0, -1);
 		return categoriesString;

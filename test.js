@@ -27,7 +27,7 @@ const main = async () => {
 	// Get all the vessels registered in PAL
 	// let vessels = await pal.getVessels();
 
-	// Convert the array of vessel names to a string of Vessel IDs
+	// Convert the array of vessel names to a string of Vessel IDs to be passed to other methods
 	// let vesselsIds = await pal.vesselNamesToIds(myVessels);
 
 	// Get all 2023 requisitions for myVessels
@@ -36,9 +36,9 @@ const main = async () => {
 	// Get all Purchase categories
 	// let categories = await pal.getPurchaseCategories();
 
-	// Convert the array of Purchase categories names to a string of IDs
-	let vesselsIds = await pal.categoriesNamesToIds(myVessels);
-	console.log(categories);
+	// Convert the array of Purchase categories names to a string of IDs to be passed to other methods
+	let catoriesIds = await pal.categoriesNamesToIds(myCategories);
+	console.log(catoriesIds);
 };
 
 main();
