@@ -1,22 +1,23 @@
-import PAL from "./pal.js";
+import * as PAL from "./pal.js";
+import PALAPI from "./pal.js";
 import "dotenv/config";
 
 // Create a new pal object
-const pal = new PAL();
+const palapi = new PALAPI();
 
 // Get credentials from env variables
-pal.url = process.env.URL;
-pal.user = process.env.PAL_USER;
-pal.password = process.env.PASSWORD;
+palapi.url = process.env.URL;
+palapi.user = process.env.PAL_USER;
+palapi.password = process.env.PASSWORD;
 
-// Import the list of vessels from an external config file
+// Import lists of parameters from external config file
 let myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
 let myCategories = ["MEDICINE", "PROVISIONS"];
 
 // Need to wrap in async function as all API calls are async
 const main = async () => {
 	// Get the session cookie to be able to use any other method
-	await pal.getCookie();
+	await palapi.getCookie();
 
 	// Get all the vessels' schedule for the next month
 	// let schedule = await pal.getVesselSchedule();
@@ -30,15 +31,16 @@ const main = async () => {
 	// Convert the array of vessel names to a string of Vessel IDs to be passed to other methods
 	// let vesselsIds = await pal.vesselNamesToIds(myVessels);
 
-	// Get all 2023 requisitions for myVessels
-	// let requsitions = await pal.generalQuery(myVessels, 2023, 1, "9380");
+	// Convert the array of Purchase categories names to a string of IDs to be passed to other methods
+	// let catoriesIds = await pal.categoriesNamesToIds(myCategories);
+	// console.log(catoriesIds);
 
 	// Get all Purchase categories
 	// let categories = await pal.getPurchaseCategories();
 
-	// Convert the array of Purchase categories names to a string of IDs to be passed to other methods
-	let catoriesIds = await pal.categoriesNamesToIds(myCategories);
-	console.log(catoriesIds);
+	// Get all 2023 requisitions for myVessels and myCategories
+	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+	console.log(requsitions);
 };
 
 main();

@@ -1,12 +1,11 @@
 import puppeteer from "puppeteer";
 import axios from "axios";
-import { dateToString } from "./parse.js";
 import FormData from "form-data";
 
 /**
- * The class that contains all the PAL e3 methods
+ * Class with all PAL e3 API call methods
  */
-export default class PAL {
+export default class PALAPI {
 	/**
 	 * ERP URL without the trailing comma
 	 * Example: https://palapp.apn-narisine.com
@@ -114,15 +113,18 @@ export default class PAL {
 	 * @param {Array} vessels Array of vessel names: ["CHEM MIA", "CHEM ZEALOT"]
 	 * @param {number} year
 	 * @param {number} docType Requisition: 1, PO: 4
-	 * @param {string} categories List of PRC categories as string: "9380,9383,9384"
+	 * @param {Array} categories Array of Purchase categories names: ["MEDICINE", "PROVISIONS"]
 	 * @return {Promise<Array>} Array of objects, each containing a Purchase document
 	 */
 	async generalQuery(vessels, year, docType, categories) {
 		console.log("Start General Query POST request...");
 		console.time("General Query reponse time");
 
-    // convert the array of vessel names to string of IDs
-    let vesslesIdsString = await this.vesselNamesToIds(vessels);
+		// convert the array of vessel names to string of IDs
+		let vesslesIdsString = await this.vesselNamesToIds(vessels);
+
+		// convert the array of vessel names to string of IDs
+		let catoriesIds = await this.categoriesNamesToIds(categories);
 
 		// build the Form body
 		let body = new FormData();
@@ -205,7 +207,7 @@ export default class PAL {
       cashPO2: false,
       GeneralVendorId: "",
       PortId: "",
-      CategoriesMultiList: "${categories}",
+      CategoriesMultiList: "${catoriesIds}",
       DocumentIn: "0",
     }`
 		);
@@ -323,11 +325,11 @@ export default class PAL {
 		return vesselsIds;
 	}
 
-  	/**
+	/**
 	 * Gets all the vessels in PAL
 	 * @return {Promise<Array>} Array of objects, each containing a Purchase category
 	 */
-  async getPurchaseCategories() {
+	async getPurchaseCategories() {
 		console.log("Start POST request for Purchase categories...");
 		console.time("Purchase categories POST request");
 
@@ -356,12 +358,12 @@ export default class PAL {
 		return response.data;
 	}
 
-  	/**
+	/**
 	 * Transforms an array of Purchase categories names to a string of IDs to be used in other methods
-	 * @param {array} myVessels Array of vessel names: ["MEDICINE", "PROVISIONS"]
+	 * @param {array} myVessels Array of Purchase categories names: ["MEDICINE", "PROVISIONS"]
 	 * @return {Promise<string>} List of Ids as string: "201205,201184"
 	 */
-  async categoriesNamesToIds(categoriesArray) {
+	async categoriesNamesToIds(categoriesArray) {
 		let categories = await this.getPurchaseCategories();
 		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text));
 		let categoriesString = "";
@@ -372,3 +374,5 @@ export default class PAL {
 		return categoriesString;
 	}
 }
+
+export * from "./parse.js";
