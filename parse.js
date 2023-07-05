@@ -108,3 +108,32 @@ export function firstCurrentMonth() {
   // console.log(anotherDate);
   return anotherDate;
 }
+
+/**
+ * Get 02MMYY of previous month
+ * @return {string} String 01MMYY of previous month
+ */
+export function secondLastMonth() {
+  let today = new Date();
+  today.setDate(0); // 0 will result in the last day of the previous month
+  today.setDate(1); // 1 will result in the first day of the month
+  today.setDate(2); // 2 will result in the second day of the month
+  let dd3 = String(today.getDate()).padStart(2, "0");
+  let mm3 = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+  let yy3 = today.getFullYear().toString().slice(2);
+  let localDate = dd3 + mm3 + yy3;
+  // console.log(localDate);
+  return localDate;
+}
+
+/**
+ * Get 0101YYYY of the previous month
+ * Return 01012022 if current month is Jan 2023. Return 01012023 if current month is Feb 2023
+ * @return {string} String 0101YYYY of the previous month
+ */
+export function previous1Jan() {
+  let today = new Date();
+  today.setDate(0); // 0 will result in the last day of the previous month
+  // console.log(`0101${today.getFullYear()}`);
+  return `0101${today.getFullYear()}`;
+}
