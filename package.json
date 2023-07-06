@@ -12,7 +12,7 @@
     "url": "git+https://github.com/bogdanrbucur/pal-e3.git"
   },
   "author": "Bogdan Bucur",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/bogdanrbucur/pal-e3/issues"
   },

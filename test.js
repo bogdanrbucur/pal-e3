@@ -20,23 +20,22 @@ const main = async () => {
 	await palapi.getCookie();
 
 	// Get all the vessels' schedule for the next month
-	// let schedule = await pal.getVesselSchedule();
+	let schedule = await pal.getVesselSchedule();
 
 	// Get all the PSC reports ever
-	// let pscReports = await pal.getPSCreports();
+	let pscReports = await pal.getPSCreports();
 
 	// Get all the vessels registered in PAL
-	// let vessels = await pal.getVessels();
+	let vessels = await pal.getVessels();
 
 	// Convert the array of vessel names to a string of Vessel IDs to be passed to other methods
-	// let vesselsIds = await pal.vesselNamesToIds(myVessels);
+	let vesselsIds = await pal.vesselNamesToIds(myVessels);
 
 	// Convert the array of Purchase categories names to a string of IDs to be passed to other methods
-	// let catoriesIds = await pal.categoriesNamesToIds(myCategories);
-	// console.log(catoriesIds);
+	let catoriesIds = await pal.categoriesNamesToIds(myCategories);
 
 	// Get all Purchase categories
-	// let categories = await pal.getPurchaseCategories();
+	let categories = await pal.getPurchaseCategories();
 
 	// Get all 2023 requisitions for myVessels and myCategories
 	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
