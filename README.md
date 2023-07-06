@@ -40,7 +40,7 @@ Wrap all the API calls in an `async` function to be able to use `await`. Before 
 
 ```js
 const main = async () => {
-	await palapi.getCookie();
+await palapi.getCookie();
 };
 
 main();
@@ -56,14 +56,16 @@ const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
 const main = async () => {
-	await palapi.getCookie();
+await palapi.getCookie();
 
-  let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
-  console.log(requsitions);
+let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+console.log(requsitions);
 };
 
 main();
 ```
+
+### Accessing all available API methods and data manipulation functions
 
 All available PAL API call methods are available on the `palapi` object using IntelliSense:
 ![ss1](https://imgur.com/xJ1W3xH.png)
