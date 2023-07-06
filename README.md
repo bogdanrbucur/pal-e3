@@ -10,56 +10,63 @@ A collection of methods for reading data from PAL e3 ERP using REST API and mani
 
 ## Usage
 
+Import the API methods as PALAPI and the data manipulation functions as PAL
+
 ```js
 import * as PAL from "./pal.js";
 import PALAPI from "./pal.js";
+```
+
+Create a new object using the PALAPI class
+`const palapi = new PALAPI();`
+
+Set the PAL URL, username and password. Use something like [dontenv](https://www.npmjs.com/package/dotenv) preferably.
+
+```js
 import "dotenv/config";
-
-// Create a new pal object
-const palapi = new PALAPI();
-
-// Get credentials from env variables
 palapi.url = process.env.URL;
 palapi.user = process.env.PAL_USER;
 palapi.password = process.env.PASSWORD;
+```
 
-// Import lists of parameters from external config file
-let myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
-let myCategories = ["MEDICINE", "PROVISIONS"];
+Import the vessels and Purchase categories and set them in variables to be reused
 
-// Need to wrap in async function as all API calls are async
+```js
+const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
+const myCategories = ["MEDICINE", "PROVISIONS"];
+```
+
+Wrap all the API calls in an `async` function to be able to use `await`. Before using any API call, need to call `getCookie()` so the session cookie will be set as `palapi.cookie` using the provided credentials.
+
+```js
 const main = async () => {
-	// Get the session cookie to be able to use any other method
 	await palapi.getCookie();
-
-	// Get all the vessels' schedule for the next month
-	let schedule = await pal.getVesselSchedule();
-
-	// Get all the PSC reports ever
-	let pscReports = await pal.getPSCreports();
-
-	// Get all the vessels registered in PAL
-	let vessels = await pal.getVessels();
-
-	// Convert the array of vessel names to a string of Vessel IDs to be passed to other methods
-	let vesselsIds = await pal.vesselNamesToIds(myVessels);
-
-	// Convert the array of Purchase categories names to a string of IDs to be passed to other methods
-	let catoriesIds = await pal.categoriesNamesToIds(myCategories);
-
-	// Get all Purchase categories
-	let categories = await pal.getPurchaseCategories();
-
-	// Get all 2023 requisitions for myVessels and myCategories
-	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
-	console.log(requsitions);
-
-	// Get the port out of a port-country string
-	let port = PAL.getPort("Antwerp {BEANR}, BELGIUM");
 };
 
 main();
 ```
 
-All available data manipulation functions can be accessed from the PAL object:
-![ss](https://imgur.com/pKDcXcd.png)
+Any other API call method from `palapi` needs to be called inside the `async` function and waited. Some methods are called automatically as needed.
+`generalQuery` will call the `vesselsIds` and `catoriesIds` methods to get the necessary IDs for the API call, so it's enough to provide arrays of names as arguments.
+
+### Getting all requsitions for given vessels and Purchase cateogries
+
+```js
+const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
+const myCategories = ["MEDICINE", "PROVISIONS"];
+
+const main = async () => {
+	await palapi.getCookie();
+
+  let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+  console.log(requsitions);
+};
+
+main();
+```
+
+All available PAL API call methods are available on the `palapi` object using IntelliSense:
+![ss1](https://imgur.com/xJ1W3xH.png)
+
+All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
+![ss2](https://imgur.com/pKDcXcd.png)
