@@ -13,8 +13,8 @@ A collection of methods for reading data from PAL e3 ERP using REST API and mani
 Import the API methods as PALAPI and the data manipulation functions as PAL
 
 ```js
-import * as PAL from "./pal.js";
-import PALAPI from "./pal.js";
+import * as PAL from "pal-e3";
+import PALAPI from "pal-e3";
 ```
 
 Create a new object using the PALAPI class
