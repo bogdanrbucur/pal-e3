@@ -20,26 +20,29 @@ const main = async () => {
 	await palapi.getCookie();
 
 	// Get all the vessels' schedule for the next month
-	let schedule = await pal.getVesselSchedule();
+	let schedule = await palapi.getVesselSchedule();
 
 	// Get all the PSC reports ever
-	let pscReports = await pal.getPSCreports();
+	let pscReports = await palapi.getPSCreports();
 
 	// Get all the vessels registered in PAL
-	let vessels = await pal.getVessels();
+	let vessels = await palapi.getVessels();
 
 	// Convert the array of vessel names to a string of Vessel IDs to be passed to other methods
-	let vesselsIds = await pal.vesselNamesToIds(myVessels);
+	let vesselsIds = await palapi.vesselNamesToIds(myVessels);
 
 	// Convert the array of Purchase categories names to a string of IDs to be passed to other methods
-	let catoriesIds = await pal.categoriesNamesToIds(myCategories);
+	let catoriesIds = await palapi.categoriesNamesToIds(myCategories);
 
 	// Get all Purchase categories
-	let categories = await pal.getPurchaseCategories();
+	let categories = await palapi.getPurchaseCategories();
 
 	// Get all 2023 requisitions for myVessels and myCategories
 	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
 	console.log(requsitions);
+
+	// Get the port out of a port-country string
+	let port = PAL.getPort("Antwerp {BEANR}, BELGIUM");
 };
 
 main();
