@@ -312,6 +312,12 @@ export default class PALAPI {
 	 * @return {Promise<string>} List of VesselObjectIds as string: "246049,246026"
 	 */
 	async vesselNamesToObjectIds(vesselsArray) {
+		// make sure the input vessel(s) are all UpperCase
+		if (typeof vesselsArray === "string") vesselsArray = vesselsArray.toUpperCase();
+		else vesselsArray = vesselsArray.map((vsl) => vsl.toUpperCase());
+
+		console.log(vesselsArray);
+
 		let vessels = await this.getVessels();
 		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
 		let vesselsIds = "";
@@ -322,21 +328,25 @@ export default class PALAPI {
 		return vesselsIds;
 	}
 
-		/**
+	/**
 	 * Transforms an array of vessel names to a string of VesselIds to be used in other methods
 	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
 	 * @return {Promise<string>} List of VesselIds as string: "246049,246026"
 	 */
-		async vesselNamesToIds(vesselsArray) {
-			let vessels = await this.getVessels();
-			let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
-			let vesselsIds = "";
-			filteredVessels.forEach((vsl) => {
-				vesselsIds += vsl.VesselId += ",";
-			});
-			vesselsIds = vesselsIds.slice(0, -1);
-			return vesselsIds;
-		}
+	async vesselNamesToIds(vesselsArray) {
+		// make sure the input vessel(s) are all UpperCase
+		if (typeof vesselsArray === "string") vesselsArray = vesselsArray.toUpperCase();
+		else vesselsArray = vesselsArray.map((vsl) => vsl.toUpperCase());
+
+		let vessels = await this.getVessels();
+		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
+		let vesselsIds = "";
+		filteredVessels.forEach((vsl) => {
+			vesselsIds += vsl.VesselId += ",";
+		});
+		vesselsIds = vesselsIds.slice(0, -1);
+		return vesselsIds;
+	}
 
 	/**
 	 * Gets all the vessels in PAL
@@ -393,48 +403,52 @@ export default class PALAPI {
 	/**
 	 * Replace user allocation for one category, on one vessel
 	 * @param {string} vessel String with vessel name
-	 * @param {Array<string>} users Array of users to be assigned to the role
 	 * @param {string} category Name of Purchase category
+	 * @param {string} role Name of Purchase role
+	 * @param {Array<string>} users Array of users to be assigned to the role
 	 * @return {Promise<Array>} Array of objects, each containing a vessel
 	 */
-	async prcAllocProcurement(vessel, category, users) {
+	async prcAllocProcurement(vessel, category, role, users) {
 		console.log("Start POST request for PRC Allocation...");
 		console.time("PRC allocation POST request");
 
 		// convert the array of vessel names to string of IDs
-		// TODO calling the same endpoint twice? cah...
 		let vslObjectIds = await this.vesselNamesToObjectIds(vessel);
-		let vslAllocIds = await this.vesselNamesToAllocIds(vessel);
 		let vslIds = await this.vesselNamesToIds(vessel);
 
 		// get users by ID
 		let usersIds = await this.userNamesToIds(users);
 
-		// TODO get roles by ID
-		// TODO
-
-		// TODO get category by ID
+		// get category by ID
 		let catId = await this.categoriesNamesToIds(category);
 
-		// TODO get ApprovalTemplateID and ApprovalCycleTemplateId
+		// get ApprovalTemplateID and ApprovalCycleTemplateId
 		let approvalsIds = await this.getPRCtemplateIds(vslIds, vslObjectIds, catId);
 
-		console.log(approvalsIds.ApprovalCycleTemplateId);
-		console.log(approvalsIds.ApprovalTemplateId);
+		// get roles by ID
+		let roleId;
+		approvalsIds.roles.forEach((responseRole) => {
+			if (responseRole.Name.toUpperCase() === role.toUpperCase()) {
+				roleId = responseRole.Code;
+			}
+		});
+		if (roleId === undefined) {
+			throw new Error("Role not found!");
+		}
 
 		// build the Form body
 		let bodyFormData = new FormData();
 		bodyFormData.append("sort", "");
 		bodyFormData.append("group", "");
 		bodyFormData.append("filter", "");
-		bodyFormData.append("ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`); // TODO method to replace name with number
-		bodyFormData.append("ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`); // TODO method to replace name with number
+		bodyFormData.append("ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`);
+		bodyFormData.append("ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`);
 		bodyFormData.append("VesselId", "");
 		bodyFormData.append("VesselObjectId", vslObjectIds);
-		bodyFormData.append("CategoryId", catId); // TODO method to replace name with number
+		bodyFormData.append("CategoryId", catId);
 		bodyFormData.append("DocType", "PROC");
-		bodyFormData.append("models[0].Id", 23); // TODO get role ID by name
-		bodyFormData.append("models[0].Code", 23); // TODO get role ID by name
+		bodyFormData.append("models[0].Id", roleId); // TODO get role ID by name
+		bodyFormData.append("models[0].Code", roleId); // TODO get role ID by name
 		bodyFormData.append("models[0].Name", "");
 		bodyFormData.append("models[0].RoleLevel", 1);
 		bodyFormData.append("models[0].Active", "true");
@@ -445,11 +459,11 @@ export default class PALAPI {
 		bodyFormData.append("models[0].NewModifiedOn", "");
 		bodyFormData.append("models[0].UserIds", usersIds);
 		bodyFormData.append("models[0].UserNames", "");
-		bodyFormData.append("models[0].VesselAllocationId", vslAllocIds);
+		bodyFormData.append("models[0].VesselAllocationId", `${approvalsIds.VesselAllocationId}`);
 		bodyFormData.append("models[0].VesselId", 0);
 		bodyFormData.append("models[0].VesselObjectId", 0);
-		bodyFormData.append("models[0].ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`); // TODO method to replace name with number
-		bodyFormData.append("models[0].ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`); // TODO method to replace name with number
+		bodyFormData.append("models[0].ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`);
+		bodyFormData.append("models[0].ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`);
 		bodyFormData.append("models[0].StopProcess", "");
 		bodyFormData.append("models[0].SNo", "");
 
@@ -468,22 +482,6 @@ export default class PALAPI {
 		console.log("Got POST response for Vessels IDs");
 		console.timeEnd("PRC allocation POST request");
 		return response.data;
-	}
-
-	/**
-	 * Transforms an array of vessel names to a string of Allocation Ids to be used in vessel allocation methods
-	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
-	 * @return {Promise<string>} List of Allocation IDs as string: "1126,1114"
-	 */
-	async vesselNamesToAllocIds(vesselsArray) {
-		let vessels = await this.getVessels();
-		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
-		let vesselsIds = "";
-		filteredVessels.forEach((vsl) => {
-			vesselsIds += vsl.Id += ",";
-		});
-		vesselsIds = vesselsIds.slice(0, -1);
-		return vesselsIds;
 	}
 
 	/**
@@ -532,7 +530,7 @@ export default class PALAPI {
 
 	/**
 	 * Transforms an array/string of usernames to a string of Ids to be used in other allocation methods
-	 * @param {Array<string>} userNames String or array of users names: ["Bogdan", "Yaniv"]
+	 * @param {Array<string>} userNames String or array of users names: ["Bogdan", "Helen"]
 	 * @return {Promise<string>} String of user IDs: "1126,1114"
 	 */
 	async userNamesToIds(userNames) {
@@ -545,7 +543,7 @@ export default class PALAPI {
 
 		let filteredUsers = [];
 		users.forEach((user) => {
-			const isMatch = userNames.some((word) => user.Name.toLowerCase().includes(word.toLowerCase()));
+			const isMatch = userNames.some((word) => user.Name.toUpperCase().includes(word.toUpperCase()));
 			if (isMatch) filteredUsers.push(user);
 		});
 
@@ -558,11 +556,11 @@ export default class PALAPI {
 	}
 
 	/**
-	 * Get the ApprovalCycleTemplateId and ApprovalTemplateId for given vessel and PRC category
+	 * Get the necessary IDs required for allocation for given vessel and PRC category
 	 * @param {number} vesselId VesselId
 	 * @param {number} vesselObjectId VesselObjectId
 	 * @param {number} categoryId CategoryId
-	 * @return {Promise<Object{ApprovalCycleTemplateId, ApprovalTemplateId}>}
+	 * @return {Promise<Object{ApprovalCycleTemplateId, ApprovalTemplateId, VesselAllocationId, roles[]}>}
 	 */
 	async getPRCtemplateIds(vesselId, vesselObjectId, categoryId) {
 		console.log("Start request for PRC template IDs...");
@@ -594,7 +592,12 @@ export default class PALAPI {
 		console.log("Got response for PRC template IDs");
 		console.timeEnd("Purchase template IDs request");
 		// return response.data.Data[0];
-		return { ApprovalCycleTemplateId: response.data.Data[0].ApprovalCycleTemplateId, ApprovalTemplateId: response.data.Data[0].ApprovalTemplateId };
+		return {
+			ApprovalCycleTemplateId: response.data.Data[0].ApprovalCycleTemplateId,
+			ApprovalTemplateId: response.data.Data[0].ApprovalTemplateId,
+			VesselAllocationId: response.data.Data[0].VesselAllocationId,
+			roles: response.data.Data,
+		};
 	}
 }
 
