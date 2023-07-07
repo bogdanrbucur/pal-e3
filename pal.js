@@ -461,49 +461,76 @@ export default class PALAPI {
 		return vesselsIds;
 	}
 
-		/**
+	/**
 	 * Gets all the Purchase users in PAL
-	 * @return {Promise<Array>} Array of objects, each containing a vessel
+	 * @return {Promise<Array>} Array of objects, each containing a user
 	 */
-		async getPRCusers() {
-			console.log("Start POST request for Purchase users...");
-			console.time("Purchase users request");
-	
-			// build the Form body
-			let bodyFormData = new FormData();
-			bodyFormData.append("sort", "");
-			bodyFormData.append("page", 1);
-			bodyFormData.append("pageSize", 500);
-			bodyFormData.append("group", "");
-			bodyFormData.append("filter", "");
-			bodyFormData.append("companyId", 1);
-			bodyFormData.append("FunctionalRoleId", "1");
-			bodyFormData.append("UserIds", "");
-			bodyFormData.append("UserName", "");
-			bodyFormData.append("VesselId", "");
-			bodyFormData.append("VesselObjectId", "");
-			bodyFormData.append("HideGridContent", "false");
-			bodyFormData.append("CategoryId", "");
-			bodyFormData.append("DocType", "");
-			bodyFormData.append("CycleTemplateId", "");
-	
-			let options = {
-				method: "POST",
-				url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselUserDetails",
-				headers: {
-					Accept: "*/*",
-					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-					Cookie: `.BSMAuthCookie=${this.cookie}`,
-				},
-				data: bodyFormData,
-			};
-	
-			let response = await axios.request(options);
-			console.log("Got POST response for Purchase users");
-			console.log(`${response.data.Total} users received`);
-			console.timeEnd("Purchase users request");
-			return response.data.Data;
+	async getPRCusers() {
+		console.log("Start POST request for Purchase users...");
+		console.time("Purchase users request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("page", 1);
+		bodyFormData.append("pageSize", 500);
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("companyId", 1);
+		bodyFormData.append("FunctionalRoleId", "1");
+		bodyFormData.append("UserIds", "");
+		bodyFormData.append("UserName", "");
+		bodyFormData.append("VesselId", "");
+		bodyFormData.append("VesselObjectId", "");
+		bodyFormData.append("HideGridContent", "false");
+		bodyFormData.append("CategoryId", "");
+		bodyFormData.append("DocType", "");
+		bodyFormData.append("CycleTemplateId", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselUserDetails",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got POST response for Purchase users");
+		console.log(`${response.data.Total} users received`);
+		console.timeEnd("Purchase users request");
+		return response.data.Data;
+	}
+
+	/**
+	 * Transforms an array of usernames to a string of Ids to be used in other allocation methods
+	 * @param {Array<string>} userNames Array of users names: ["Bogdan", "Yaniv"]
+	 * @return {Promise<string>} String of user IDs: "1126,1114"
+	 */
+	async userNamesToIds(userNames) {
+		let users = await this.getPRCusers();
+
+		// if input is string, make an array of one item and continue
+		if (typeof userNames == "string") {
+			userNames = [`${userNames}`];
 		}
+
+		let filteredUsers = [];
+		users.forEach((user) => {
+			const isMatch = userNames.some((word) => user.Name.toLowerCase().includes(word.toLowerCase()));
+			if (isMatch) filteredUsers.push(user);
+		});
+
+		let userIds = "";
+		filteredUsers.forEach((usr) => {
+			userIds += usr.UserId += ",";
+		});
+		userIds = userIds.slice(0, -1);
+		return userIds;
+	}
 }
 
 export * from "./parse.js";
