@@ -408,13 +408,16 @@ export default class PALAPI {
 
 	/**
 	 * Replace user allocation for one category, on one vessel
+	 * @param {string} docType "PROC" or "JOB"
 	 * @param {string} vessel String with vessel name
 	 * @param {string} category Name of Purchase category
 	 * @param {string} role Name of Purchase role
 	 * @param {Array<string>} users Array of users to be assigned to the role
-	 * @return {Promise<Array>} Array of objects, each containing a vessel
+	 * @return {Promise<boolean>} If succesful or not
 	 */
-	async prcAllocProcurement(vessel, category, role, users) {
+	async purchaseAllocation(docType, vessel, category, role, users) {
+		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
+
 		console.log("Start POST request for PRC Allocation...");
 		console.time("PRC allocation POST request");
 
@@ -473,9 +476,9 @@ export default class PALAPI {
 		bodyFormData.append("VesselId", "");
 		bodyFormData.append("VesselObjectId", vslObjectIds);
 		bodyFormData.append("CategoryId", catId);
-		bodyFormData.append("DocType", "PROC");
-		bodyFormData.append("models[0].Id", `${roleId}`); // TODO get role ID by name
-		bodyFormData.append("models[0].Code", `${roleCode}`); // TODO get role ID by name
+		bodyFormData.append("DocType", `${docType}`);
+		bodyFormData.append("models[0].Id", `${roleId}`);
+		bodyFormData.append("models[0].Code", `${roleCode}`);
 		bodyFormData.append("models[0].Name", "");
 		bodyFormData.append("models[0].RoleLevel", 1);
 		bodyFormData.append("models[0].Active", "true");

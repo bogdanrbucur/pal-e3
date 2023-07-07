@@ -2,7 +2,7 @@
 
 ## Description
 
-A collection of methods for reading data from PAL e3 ERP using REST API and manipulating it.
+A collection of methods for interacting with MariApps PAL e3 ERP via REST API.
 
 ## Installation
 
@@ -18,7 +18,10 @@ import PALAPI from "pal-e3";
 ```
 
 Create a new object using the PALAPI class
-`const palapi = new PALAPI();`
+
+```js
+const palapi = new PALAPI();
+```
 
 Set the PAL URL, username and password. Use something like [dontenv](https://www.npmjs.com/package/dotenv) preferably.
 
@@ -40,7 +43,7 @@ Wrap all the API calls in an `async` function to be able to use `await`. Before 
 
 ```js
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 };
 
 main();
@@ -49,17 +52,50 @@ main();
 Any other API call method from `palapi` needs to be called inside the `async` function and waited. Some methods are called automatically as needed.
 `generalQuery` will call the `vesselsIds` and `catoriesIds` methods to get the necessary IDs for the API call, so it's enough to provide arrays of names as arguments.
 
-### Getting all requsitions for given vessels and Purchase cateogries
+### Examples
+
+#### Getting all requsitions for given vessels and Purchase cateogries
 
 ```js
+import * as PAL from "pal-e3";
+import PALAPI from "pal-e3";
+
+const palapi = new PALAPI();
+
+palapi.url = "https://...";
+palapi.user = "user_name";
+palapi.password = "passw0rd";
+
 const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 
-let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
-console.log(requsitions);
+	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+	console.log(requsitions);
+};
+
+main();
+```
+
+#### Allocate Roni and Bogdan on Chem Polaris, Crew Welfare category in the Tech. Director role
+
+```js
+import * as PAL from "pal-e3";
+import PALAPI from "pal-e3";
+
+const palapi = new PALAPI();
+
+palapi.url = "https://...";
+palapi.user = "user_name";
+palapi.password = "passw0rd";
+
+const main = async () => {
+	await palapi.getCookie();
+
+	let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
+	console.log(allocation); // true if succesful
 };
 
 main();
