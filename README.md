@@ -2,7 +2,7 @@
 
 ## Description
 
-A collection of methods for interacting with MariApps PAL e3 ERP via REST API.
+Interact with MariApps PAL e3 ERP via REST API.
 
 ## Installation
 
