@@ -43,7 +43,7 @@ Wrap all the API calls in an `async` function to be able to use `await`. Before 
 
 ```js
 const main = async () => {
-	await palapi.getCookie();
+await palapi.getCookie();
 };
 
 main();
@@ -70,10 +70,10 @@ const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
 const main = async () => {
-	await palapi.getCookie();
+await palapi.getCookie();
 
-	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
-	console.log(requsitions);
+let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+console.log(requsitions);
 };
 
 main();
@@ -92,10 +92,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-	await palapi.getCookie();
+await palapi.getCookie();
 
-	let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
-	console.log(allocation); // true if succesful
+let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
+console.log(allocation); // true if succesful
 };
 
 main();
