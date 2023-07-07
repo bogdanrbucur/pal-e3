@@ -373,6 +373,62 @@ export default class PALAPI {
 		categoriesString = categoriesString.slice(0, -1);
 		return categoriesString;
 	}
+
+		/**
+	 * Gets all the vessels in PAL
+	 * @return {Promise<Array>} Array of objects, each containing a vessel
+	 */
+		async prcAllocProcurement() {
+			console.log("Start POST request for PRC Allocation...");
+			console.time("PRC allocation POST request");
+	
+			// build the Form body
+			let bodyFormData = new FormData();
+			bodyFormData.append("sort", "");
+			bodyFormData.append("group", "");
+			bodyFormData.append("filter", "");
+			bodyFormData.append("ApprovalCycleTemplateId", 201177);
+			bodyFormData.append("ApprovalTemplateId", 201178);
+			bodyFormData.append("VesselId", 304415);
+			bodyFormData.append("VesselObjectId", 246086);
+			bodyFormData.append("CategoryId", 0);
+			bodyFormData.append("DocType", "PROC");
+			bodyFormData.append("models[0].Id", 23);
+			bodyFormData.append("models[0].Code", 23);
+			bodyFormData.append("models[0].Name", "IT OFFICER");
+			bodyFormData.append("models[0].RoleLevel", 1);
+			bodyFormData.append("models[0].Active", "true");
+			bodyFormData.append("models[0].SortOrder", 14);
+			bodyFormData.append("models[0].ModifiedById", 149755);
+			bodyFormData.append("models[0].ModifiedOn", "");
+			bodyFormData.append("models[0].ModifiedBy", "Bogdan Bucur");
+			bodyFormData.append("models[0].NewModifiedOn", "21-Apr-1991 1:46:58 PM");
+			bodyFormData.append("models[0].UserIds", "145595,149755");
+			bodyFormData.append("models[0].UserNames", "Takraj Binadi, Bogdan Bucur");
+			bodyFormData.append("models[0].VesselAllocationId", 2471);
+			bodyFormData.append("models[0].VesselId", 0);
+			bodyFormData.append("models[0].VesselObjectId", 0);
+			bodyFormData.append("models[0].ApprovalCycleTemplateId", 201177);
+			bodyFormData.append("models[0].ApprovalTemplateId", 201178);
+			bodyFormData.append("models[0].StopProcess", "");
+			bodyFormData.append("models[0].SNo", 14);
+	
+			let options = {
+				method: "POST",
+				url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/UpdateFunctionalRoles",
+				headers: {
+					Accept: "*/*",
+					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+					Cookie: `.BSMAuthCookie=${this.cookie}`,
+				},
+				data: bodyFormData,
+			};
+	
+			let response = await axios.request(options);
+			console.log("Got POST response for Vessels IDs");
+			console.timeEnd("PRC allocation POST request");
+			return response.data;
+		}
 }
 
 export * from "./parse.js";
