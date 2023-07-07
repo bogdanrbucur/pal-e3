@@ -388,15 +388,21 @@ export default class PALAPI {
 	 */
 	async categoriesNamesToIds(categoriesArray) {
 		// Select Any is category 0
-		if (typeof categoriesArray === "string" && categoriesArray.toLowerCase() === "select any") return 0;
+		if (typeof categoriesArray === "string" && categoriesArray.toUpperCase() === "SELECT ANY") return 0;
+
+		// make sure the input categori(es) are all UpperCase
+		if (typeof categoriesArray === "string") categoriesArray = categoriesArray.toUpperCase();
+		else categoriesArray = categoriesArray.map((cat) => cat.toUpperCase());
 
 		let categories = await this.getPurchaseCategories();
-		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text));
+		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text.toUpperCase()));
 		let categoriesString = "";
 		filteredCategories.forEach((cat) => {
 			categoriesString += cat.Value += ",";
 		});
 		categoriesString = categoriesString.slice(0, -1);
+
+		if (categoriesString === "") throw new Error("Category not found!");
 		return categoriesString;
 	}
 
@@ -414,27 +420,48 @@ export default class PALAPI {
 
 		// convert the array of vessel names to string of IDs
 		let vslObjectIds = await this.vesselNamesToObjectIds(vessel);
+		console.log(`VesselObjectId: ${vslObjectIds}`);
 		let vslIds = await this.vesselNamesToIds(vessel);
+		console.log(`VesselId: ${vslIds}`);
 
 		// get users by ID
 		let usersIds = await this.userNamesToIds(users);
+		console.log(`UsersIds: ${usersIds}`);
 
 		// get category by ID
 		let catId = await this.categoriesNamesToIds(category);
+		console.log(`CategoryId: ${catId}`);
 
 		// get ApprovalTemplateID and ApprovalCycleTemplateId
 		let approvalsIds = await this.getPRCtemplateIds(vslIds, vslObjectIds, catId);
 
-		// get roles by ID
+		// get roleCode
+		let roleCode;
+		approvalsIds.roles.forEach((responseRole) => {
+			if (responseRole.Name.toUpperCase() === role.toUpperCase()) {
+				roleCode = responseRole.Code;
+			}
+		});
+		if (roleCode === undefined) {
+			throw new Error("Role not found!");
+		}
+
+		// get roleCode
 		let roleId;
 		approvalsIds.roles.forEach((responseRole) => {
 			if (responseRole.Name.toUpperCase() === role.toUpperCase()) {
-				roleId = responseRole.Code;
+				roleId = responseRole.Id;
 			}
 		});
 		if (roleId === undefined) {
 			throw new Error("Role not found!");
 		}
+
+		console.log(`ApprovalCycleTemplateId: ${approvalsIds.ApprovalCycleTemplateId}`);
+		console.log(`ApprovalTemplateId: ${approvalsIds.ApprovalTemplateId}`);
+		console.log(`VesselAllocationId: ${approvalsIds.VesselAllocationId}`);
+		console.log(`RoleCode: ${roleCode}`);
+		console.log(`RoleId: ${roleId}`);
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -447,8 +474,8 @@ export default class PALAPI {
 		bodyFormData.append("VesselObjectId", vslObjectIds);
 		bodyFormData.append("CategoryId", catId);
 		bodyFormData.append("DocType", "PROC");
-		bodyFormData.append("models[0].Id", roleId); // TODO get role ID by name
-		bodyFormData.append("models[0].Code", roleId); // TODO get role ID by name
+		bodyFormData.append("models[0].Id", `${roleId}`); // TODO get role ID by name
+		bodyFormData.append("models[0].Code", `${roleCode}`); // TODO get role ID by name
 		bodyFormData.append("models[0].Name", "");
 		bodyFormData.append("models[0].RoleLevel", 1);
 		bodyFormData.append("models[0].Active", "true");
@@ -481,7 +508,19 @@ export default class PALAPI {
 		let response = await axios.request(options);
 		console.log("Got POST response for Vessels IDs");
 		console.timeEnd("PRC allocation POST request");
-		return response.data;
+
+		// validate the action
+		// if any error exists, return false
+		if (response.data.Errors !== null) return false;
+		// return response.data;
+		return this.isPRCallocSuccessful(
+			response.data.Data,
+			approvalsIds.ApprovalCycleTemplateId,
+			approvalsIds.ApprovalTemplateId,
+			roleCode,
+			usersIds,
+			approvalsIds.VesselAllocationId
+		);
 	}
 
 	/**
@@ -534,6 +573,8 @@ export default class PALAPI {
 	 * @return {Promise<string>} String of user IDs: "1126,1114"
 	 */
 	async userNamesToIds(userNames) {
+		if (userNames === "") return "";
+
 		let users = await this.getPRCusers();
 
 		// if input is string, make an array of one item and continue
@@ -552,6 +593,7 @@ export default class PALAPI {
 			userIds += usr.UserId += ",";
 		});
 		userIds = userIds.slice(0, -1);
+		if (userIds === "") throw new Error("User not found!");
 		return userIds;
 	}
 
@@ -598,6 +640,49 @@ export default class PALAPI {
 			VesselAllocationId: response.data.Data[0].VesselAllocationId,
 			roles: response.data.Data,
 		};
+	}
+
+	/**
+	 * Validate the reponse to check if the PRC allocation was succesful
+	 * @param {Object} reponse
+	 * @param {number} ApprovalCycleTemplateId
+	 * @param {number} ApprovalTemplateId
+	 * @param {number} RoleId
+	 * @param {string} UserIds
+	 * @param {number} VesselAllocationId
+	 * @return {boolean}
+	 */
+	isPRCallocSuccessful(response, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId) {
+		let valid = false;
+
+		// make an array from the provided user IDs
+		let UserIdsArray = UserIds.split(",");
+
+		response.forEach((element) => {
+			// make an array from the server reponse users
+			let responseUserIdsArray = element.UserIds.split(",");
+			let usersValid = false;
+
+			// for each provided user ID, check if it's among the ones the server responded with
+			UserIdsArray.forEach((user) => {
+				if (responseUserIdsArray.includes(user)) {
+					usersValid = true;
+				} else {
+					usersValid = false;
+				}
+			});
+
+			if (
+				element.ApprovalCycleTemplateId === ApprovalCycleTemplateId &&
+				element.ApprovalTemplateId === ApprovalTemplateId &&
+				element.Code === RoleId &&
+				element.VesselAllocationId === VesselAllocationId &&
+				usersValid
+			) {
+				valid = true;
+			}
+		});
+		return valid;
 	}
 }
 
