@@ -4,7 +4,7 @@
 
 Interact with MariApps PAL e3 ERP via REST API.
 
-Since PAL e3 does not offer APIs for programatically interacting with the backend, this package provides functions which abstract the complexity of performing HTTP requests to the backend server.
+Since PAL e3 does not offer APIs for programmatically interacting with the backend, this package provides functions which abstract the complexity of performing HTTP requests to the backend server.
 
 ## Installation
 
