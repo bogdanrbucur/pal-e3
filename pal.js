@@ -507,7 +507,7 @@ export default class PALAPI {
 
 	/**
 	 * Transforms an array of usernames to a string of Ids to be used in other allocation methods
-	 * @param {Array<string>} userNames Array of users names: ["Bogdan", "Yaniv"]
+	 * @param {Array<string>} userNames String or array of users names: ["Bogdan", "Yaniv"]
 	 * @return {Promise<string>} String of user IDs: "1126,1114"
 	 */
 	async userNamesToIds(userNames) {
