@@ -1,7 +1,7 @@
 {
 	"name": "pal-e3",
-	"version": "1.0.2",
-	"description": "Package containing methods for interacting with MariApps PAL e3 ERP via REST API.",
+	"version": "1.1.0",
+	"description": "Interact with MariApps PAL e3 ERP via REST API.",
 	"main": "pal.js",
 	"type": "module",
 	"keywords": [
@@ -28,5 +28,8 @@
 		"axios": "^1.4.0",
 		"form-data": "^4.0.0",
 		"puppeteer": "^20.7.4"
+	},
+	"devDependencies": {
+		"dotenv": "^16.3.1"
 	}
 }

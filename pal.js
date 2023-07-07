@@ -121,7 +121,7 @@ export default class PALAPI {
 		console.time("General Query reponse time");
 
 		// convert the array of vessel names to string of IDs
-		let vesslesIdsString = await this.vesselNamesToIds(vessels);
+		let vesslesIdsString = await this.vesselNamesToObjectIds(vessels);
 
 		// convert the array of vessel names to string of IDs
 		let catoriesIds = await this.categoriesNamesToIds(categories);
@@ -278,22 +278,20 @@ export default class PALAPI {
 	 * @return {Promise<Array>} Array of objects, each containing a vessel
 	 */
 	async getVessels() {
-		console.log("Start POST request for vessels' IDs...");
-		console.time("Vessels IDs POST request");
+		console.log("Start POST request for vessels...");
+		console.time("Vessels POST request");
 
 		// build the Form body
 		let bodyFormData = new FormData();
-		bodyFormData.append("isAutoSearchRequest", "true");
-		bodyFormData.append("fleet", 0);
-		bodyFormData.append("company", 0);
-		bodyFormData.append("owner", 0);
-		bodyFormData.append("vesselGroup", 0);
-		bodyFormData.append("OperationOff", 0);
-		bodyFormData.append("ExVessel", "N");
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("HideGridContent", "false");
+		bodyFormData.append("companyId", 1);
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palvoyage/VoyagePAL/VesselSearch/GetVessels",
+			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselDetails",
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -303,9 +301,8 @@ export default class PALAPI {
 		};
 
 		let response = await axios.request(options);
-		console.log("Got POST response for Vessels IDs");
-		console.log(`${response.data.Total} vessels received`);
-		console.timeEnd("Vessels IDs POST request");
+		console.log("Got POST response for vessels");
+		console.timeEnd("Vessels POST request");
 		return response.data.Data;
 	}
 
@@ -314,12 +311,38 @@ export default class PALAPI {
 	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
 	 * @return {Promise<string>} List of VesselObjectIds as string: "246049,246026"
 	 */
-	async vesselNamesToIds(vesselsArray) {
+	async vesselNamesToObjectIds(vesselsArray) {
+		// make sure the input vessel(s) are all UpperCase
+		if (typeof vesselsArray === "string") vesselsArray = vesselsArray.toUpperCase();
+		else vesselsArray = vesselsArray.map((vsl) => vsl.toUpperCase());
+
+		console.log(vesselsArray);
+
 		let vessels = await this.getVessels();
-		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.Vessel));
+		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
 		let vesselsIds = "";
 		filteredVessels.forEach((vsl) => {
 			vesselsIds += vsl.VesselObjectId += ",";
+		});
+		vesselsIds = vesselsIds.slice(0, -1);
+		return vesselsIds;
+	}
+
+	/**
+	 * Transforms an array of vessel names to a string of VesselIds to be used in other methods
+	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
+	 * @return {Promise<string>} List of VesselIds as string: "246049,246026"
+	 */
+	async vesselNamesToIds(vesselsArray) {
+		// make sure the input vessel(s) are all UpperCase
+		if (typeof vesselsArray === "string") vesselsArray = vesselsArray.toUpperCase();
+		else vesselsArray = vesselsArray.map((vsl) => vsl.toUpperCase());
+
+		let vessels = await this.getVessels();
+		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
+		let vesselsIds = "";
+		filteredVessels.forEach((vsl) => {
+			vesselsIds += vsl.VesselId += ",";
 		});
 		vesselsIds = vesselsIds.slice(0, -1);
 		return vesselsIds;
@@ -364,14 +387,305 @@ export default class PALAPI {
 	 * @return {Promise<string>} List of Ids as string: "201205,201184"
 	 */
 	async categoriesNamesToIds(categoriesArray) {
+		// Select Any is category 0
+		if (typeof categoriesArray === "string" && categoriesArray.toUpperCase() === "SELECT ANY") return 0;
+
+		// make sure the input categori(es) are all UpperCase
+		if (typeof categoriesArray === "string") categoriesArray = categoriesArray.toUpperCase();
+		else categoriesArray = categoriesArray.map((cat) => cat.toUpperCase());
+
 		let categories = await this.getPurchaseCategories();
-		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text));
+		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text.toUpperCase()));
 		let categoriesString = "";
 		filteredCategories.forEach((cat) => {
 			categoriesString += cat.Value += ",";
 		});
 		categoriesString = categoriesString.slice(0, -1);
+
+		if (categoriesString === "") throw new Error("Category not found!");
 		return categoriesString;
+	}
+
+	/**
+	 * Replace user allocation for one category, on one vessel
+	 * @param {string} docType "PROC" or "JOB"
+	 * @param {string} vessel String with vessel name
+	 * @param {string} category Name of Purchase category
+	 * @param {string} role Name of Purchase role
+	 * @param {Array<string>} users Array of users to be assigned to the role
+	 * @return {Promise<boolean>} If succesful or not
+	 */
+	async purchaseAllocation(docType, vessel, category, role, users) {
+		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
+
+		console.log("Start POST request for PRC Allocation...");
+		console.time("PRC allocation POST request");
+
+		// convert the array of vessel names to string of IDs
+		let vslObjectIds = await this.vesselNamesToObjectIds(vessel);
+		console.log(`VesselObjectId: ${vslObjectIds}`);
+		let vslIds = await this.vesselNamesToIds(vessel);
+		console.log(`VesselId: ${vslIds}`);
+
+		// get users by ID
+		let usersIds = await this.userNamesToIds(users);
+		console.log(`UsersIds: ${usersIds}`);
+
+		// get category by ID
+		let catId = await this.categoriesNamesToIds(category);
+		console.log(`CategoryId: ${catId}`);
+
+		// get ApprovalTemplateID and ApprovalCycleTemplateId
+		let approvalsIds = await this.getPRCtemplateIds(vslIds, vslObjectIds, catId);
+
+		// get roleCode
+		let roleCode;
+		approvalsIds.roles.forEach((responseRole) => {
+			if (responseRole.Name.toUpperCase() === role.toUpperCase()) {
+				roleCode = responseRole.Code;
+			}
+		});
+		if (roleCode === undefined) {
+			throw new Error("Role not found!");
+		}
+
+		// get roleCode
+		let roleId;
+		approvalsIds.roles.forEach((responseRole) => {
+			if (responseRole.Name.toUpperCase() === role.toUpperCase()) {
+				roleId = responseRole.Id;
+			}
+		});
+		if (roleId === undefined) {
+			throw new Error("Role not found!");
+		}
+
+		console.log(`ApprovalCycleTemplateId: ${approvalsIds.ApprovalCycleTemplateId}`);
+		console.log(`ApprovalTemplateId: ${approvalsIds.ApprovalTemplateId}`);
+		console.log(`VesselAllocationId: ${approvalsIds.VesselAllocationId}`);
+		console.log(`RoleCode: ${roleCode}`);
+		console.log(`RoleId: ${roleId}`);
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`);
+		bodyFormData.append("ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`);
+		bodyFormData.append("VesselId", "");
+		bodyFormData.append("VesselObjectId", vslObjectIds);
+		bodyFormData.append("CategoryId", catId);
+		bodyFormData.append("DocType", `${docType}`);
+		bodyFormData.append("models[0].Id", `${roleId}`);
+		bodyFormData.append("models[0].Code", `${roleCode}`);
+		bodyFormData.append("models[0].Name", "");
+		bodyFormData.append("models[0].RoleLevel", 1);
+		bodyFormData.append("models[0].Active", "true");
+		bodyFormData.append("models[0].SortOrder", "");
+		bodyFormData.append("models[0].ModifiedById", "");
+		bodyFormData.append("models[0].ModifiedOn", "");
+		bodyFormData.append("models[0].ModifiedBy", "");
+		bodyFormData.append("models[0].NewModifiedOn", "");
+		bodyFormData.append("models[0].UserIds", usersIds);
+		bodyFormData.append("models[0].UserNames", "");
+		bodyFormData.append("models[0].VesselAllocationId", `${approvalsIds.VesselAllocationId}`);
+		bodyFormData.append("models[0].VesselId", 0);
+		bodyFormData.append("models[0].VesselObjectId", 0);
+		bodyFormData.append("models[0].ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`);
+		bodyFormData.append("models[0].ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`);
+		bodyFormData.append("models[0].StopProcess", "");
+		bodyFormData.append("models[0].SNo", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/UpdateFunctionalRoles",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got POST response for Vessels IDs");
+		console.timeEnd("PRC allocation POST request");
+
+		// validate the action
+		// if any error exists, return false
+		if (response.data.Errors !== null) return false;
+		// return response.data;
+		return this.isPRCallocSuccessful(
+			response.data.Data,
+			approvalsIds.ApprovalCycleTemplateId,
+			approvalsIds.ApprovalTemplateId,
+			roleCode,
+			usersIds,
+			approvalsIds.VesselAllocationId
+		);
+	}
+
+	/**
+	 * Gets all the Purchase users in PAL
+	 * @return {Promise<Object[]>} Array of objects, each containing a user
+	 */
+	async getPRCusers() {
+		console.log("Start POST request for Purchase users...");
+		console.time("Purchase users request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("page", 1);
+		bodyFormData.append("pageSize", 500);
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("companyId", 1);
+		bodyFormData.append("FunctionalRoleId", "1");
+		bodyFormData.append("UserIds", "");
+		bodyFormData.append("UserName", "");
+		bodyFormData.append("VesselId", "");
+		bodyFormData.append("VesselObjectId", "");
+		bodyFormData.append("HideGridContent", "false");
+		bodyFormData.append("CategoryId", "");
+		bodyFormData.append("DocType", "");
+		bodyFormData.append("CycleTemplateId", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselUserDetails",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got POST response for Purchase users");
+		console.log(`${response.data.Total} users received`);
+		console.timeEnd("Purchase users request");
+		return response.data.Data;
+	}
+
+	/**
+	 * Transforms an array/string of usernames to a string of Ids to be used in other allocation methods
+	 * @param {Array<string>} userNames String or array of users names: ["Bogdan", "Helen"]
+	 * @return {Promise<string>} String of user IDs: "1126,1114"
+	 */
+	async userNamesToIds(userNames) {
+		if (userNames === "") return "";
+
+		let users = await this.getPRCusers();
+
+		// if input is string, make an array of one item and continue
+		if (typeof userNames == "string") {
+			userNames = [`${userNames}`];
+		}
+
+		let filteredUsers = [];
+		users.forEach((user) => {
+			const isMatch = userNames.some((word) => user.Name.toUpperCase().includes(word.toUpperCase()));
+			if (isMatch) filteredUsers.push(user);
+		});
+
+		let userIds = "";
+		filteredUsers.forEach((usr) => {
+			userIds += usr.UserId += ",";
+		});
+		userIds = userIds.slice(0, -1);
+		if (userIds === "") throw new Error("User not found!");
+		return userIds;
+	}
+
+	/**
+	 * Get the necessary IDs required for allocation for given vessel and PRC category
+	 * @param {number} vesselId VesselId
+	 * @param {number} vesselObjectId VesselObjectId
+	 * @param {number} categoryId CategoryId
+	 * @return {Promise<Object{ApprovalCycleTemplateId, ApprovalTemplateId, VesselAllocationId, roles[]}>}
+	 */
+	async getPRCtemplateIds(vesselId, vesselObjectId, categoryId) {
+		console.log("Start request for PRC template IDs...");
+		console.time("Purchase template IDs request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("VesselId", vesselId);
+		bodyFormData.append("VesselObjectId", vesselObjectId);
+		bodyFormData.append("CategoryId", categoryId);
+		bodyFormData.append("DocType", "PROC");
+		bodyFormData.append("CycleTemplateId", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetFunctionalRoleDetails",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got response for PRC template IDs");
+		console.timeEnd("Purchase template IDs request");
+		// return response.data.Data[0];
+		return {
+			ApprovalCycleTemplateId: response.data.Data[0].ApprovalCycleTemplateId,
+			ApprovalTemplateId: response.data.Data[0].ApprovalTemplateId,
+			VesselAllocationId: response.data.Data[0].VesselAllocationId,
+			roles: response.data.Data,
+		};
+	}
+
+	/**
+	 * Validate the reponse to check if the PRC allocation was succesful
+	 * @param {Object} reponse
+	 * @param {number} ApprovalCycleTemplateId
+	 * @param {number} ApprovalTemplateId
+	 * @param {number} RoleId
+	 * @param {string} UserIds
+	 * @param {number} VesselAllocationId
+	 * @return {boolean}
+	 */
+	isPRCallocSuccessful(response, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId) {
+		let valid = false;
+
+		// make an array from the provided user IDs
+		let UserIdsArray = UserIds.split(",");
+
+		response.forEach((element) => {
+			// make an array from the server reponse users
+			let responseUserIdsArray = element.UserIds.split(",");
+			let usersValid = false;
+
+			// for each provided user ID, check if it's among the ones the server responded with
+			UserIdsArray.forEach((user) => {
+				if (responseUserIdsArray.includes(user)) {
+					usersValid = true;
+				} else {
+					usersValid = false;
+				}
+			});
+
+			if (
+				element.ApprovalCycleTemplateId === ApprovalCycleTemplateId &&
+				element.ApprovalTemplateId === ApprovalTemplateId &&
+				element.Code === RoleId &&
+				element.VesselAllocationId === VesselAllocationId &&
+				usersValid
+			) {
+				valid = true;
+			}
+		});
+		return valid;
 	}
 }
 
