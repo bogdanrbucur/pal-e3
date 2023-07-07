@@ -373,11 +373,29 @@ export default class PALAPI {
 
 	/**
 	 * Gets all the vessels in PAL
+	 * @param {string} vessel String with vessel name
 	 * @return {Promise<Array>} Array of objects, each containing a vessel
 	 */
-	async prcAllocProcurement() {
+	async prcAllocProcurement(vessel) {
 		console.log("Start POST request for PRC Allocation...");
 		console.time("PRC allocation POST request");
+
+		// convert the array of vessel names to string of IDs
+		// TODO calling the same endpoint twice? cah...
+		let vslObjectIds = await this.vesselNamesToIds(vessel);
+		let vslAllocIds = await this.vesselNamesToAllocIds(vessel);
+
+		// TODO get users by ID
+		// TODO
+
+		// TODO get roles by ID
+		// TODO
+
+		// TODO get ApprovalTemplateID
+		// TODO
+
+		// TODO get ApprovalCycleTemplateId
+		// TODO
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -387,11 +405,11 @@ export default class PALAPI {
 		bodyFormData.append("ApprovalCycleTemplateId", 201177); // TODO method to replace name with number
 		bodyFormData.append("ApprovalTemplateId", 201178); // TODO method to replace name with number
 		bodyFormData.append("VesselId", "");
-		bodyFormData.append("VesselObjectId", 246086); // TODO method to replace name with number
+		bodyFormData.append("VesselObjectId", vslObjectIds);
 		bodyFormData.append("CategoryId", 0);
 		bodyFormData.append("DocType", "PROC");
-		bodyFormData.append("models[0].Id", 23);
-		bodyFormData.append("models[0].Code", 23);
+		bodyFormData.append("models[0].Id", 23); // TODO get role ID by name
+		bodyFormData.append("models[0].Code", 23); // TODO get role ID by name
 		bodyFormData.append("models[0].Name", "");
 		bodyFormData.append("models[0].RoleLevel", 1);
 		bodyFormData.append("models[0].Active", "true");
@@ -400,9 +418,9 @@ export default class PALAPI {
 		bodyFormData.append("models[0].ModifiedOn", "");
 		bodyFormData.append("models[0].ModifiedBy", "");
 		bodyFormData.append("models[0].NewModifiedOn", "");
-		bodyFormData.append("models[0].UserIds", "145595"); // TODO method to replace name with number
+		bodyFormData.append("models[0].UserIds", "145595"); // TODO method to replace names with numbers
 		bodyFormData.append("models[0].UserNames", "");
-		bodyFormData.append("models[0].VesselAllocationId", 2471); // TODO method to replace name with number
+		bodyFormData.append("models[0].VesselAllocationId", vslAllocIds);
 		bodyFormData.append("models[0].VesselId", 0);
 		bodyFormData.append("models[0].VesselObjectId", 0);
 		bodyFormData.append("models[0].ApprovalCycleTemplateId", 201177); // TODO method to replace name with number
@@ -442,6 +460,50 @@ export default class PALAPI {
 		vesselsIds = vesselsIds.slice(0, -1);
 		return vesselsIds;
 	}
+
+		/**
+	 * Gets all the Purchase users in PAL
+	 * @return {Promise<Array>} Array of objects, each containing a vessel
+	 */
+		async getPRCusers() {
+			console.log("Start POST request for Purchase users...");
+			console.time("Purchase users request");
+	
+			// build the Form body
+			let bodyFormData = new FormData();
+			bodyFormData.append("sort", "");
+			bodyFormData.append("page", 1);
+			bodyFormData.append("pageSize", 500);
+			bodyFormData.append("group", "");
+			bodyFormData.append("filter", "");
+			bodyFormData.append("companyId", 1);
+			bodyFormData.append("FunctionalRoleId", "1");
+			bodyFormData.append("UserIds", "");
+			bodyFormData.append("UserName", "");
+			bodyFormData.append("VesselId", "");
+			bodyFormData.append("VesselObjectId", "");
+			bodyFormData.append("HideGridContent", "false");
+			bodyFormData.append("CategoryId", "");
+			bodyFormData.append("DocType", "");
+			bodyFormData.append("CycleTemplateId", "");
+	
+			let options = {
+				method: "POST",
+				url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselUserDetails",
+				headers: {
+					Accept: "*/*",
+					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+					Cookie: `.BSMAuthCookie=${this.cookie}`,
+				},
+				data: bodyFormData,
+			};
+	
+			let response = await axios.request(options);
+			console.log("Got POST response for Purchase users");
+			console.log(`${response.data.Total} users received`);
+			console.timeEnd("Purchase users request");
+			return response.data.Data;
+		}
 }
 
 export * from "./parse.js";
