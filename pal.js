@@ -121,7 +121,7 @@ export default class PALAPI {
 		console.time("General Query reponse time");
 
 		// convert the array of vessel names to string of IDs
-		let vesslesIdsString = await this.vesselNamesToIds(vessels);
+		let vesslesIdsString = await this.vesselNamesToObjectIds(vessels);
 
 		// convert the array of vessel names to string of IDs
 		let catoriesIds = await this.categoriesNamesToIds(categories);
@@ -311,7 +311,7 @@ export default class PALAPI {
 	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
 	 * @return {Promise<string>} List of VesselObjectIds as string: "246049,246026"
 	 */
-	async vesselNamesToIds(vesselsArray) {
+	async vesselNamesToObjectIds(vesselsArray) {
 		let vessels = await this.getVessels();
 		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
 		let vesselsIds = "";
@@ -321,6 +321,22 @@ export default class PALAPI {
 		vesselsIds = vesselsIds.slice(0, -1);
 		return vesselsIds;
 	}
+
+		/**
+	 * Transforms an array of vessel names to a string of VesselIds to be used in other methods
+	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
+	 * @return {Promise<string>} List of VesselIds as string: "246049,246026"
+	 */
+		async vesselNamesToIds(vesselsArray) {
+			let vessels = await this.getVessels();
+			let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
+			let vesselsIds = "";
+			filteredVessels.forEach((vsl) => {
+				vesselsIds += vsl.VesselId += ",";
+			});
+			vesselsIds = vesselsIds.slice(0, -1);
+			return vesselsIds;
+		}
 
 	/**
 	 * Gets all the vessels in PAL
@@ -361,6 +377,9 @@ export default class PALAPI {
 	 * @return {Promise<string>} List of Ids as string: "201205,201184"
 	 */
 	async categoriesNamesToIds(categoriesArray) {
+		// Select Any is category 0
+		if (typeof categoriesArray === "string" && categoriesArray.toLowerCase() === "select any") return 0;
+
 		let categories = await this.getPurchaseCategories();
 		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text));
 		let categoriesString = "";
@@ -372,41 +391,47 @@ export default class PALAPI {
 	}
 
 	/**
-	 * Gets all the vessels in PAL
+	 * Replace user allocation for one category, on one vessel
 	 * @param {string} vessel String with vessel name
+	 * @param {Array<string>} users Array of users to be assigned to the role
+	 * @param {string} category Name of Purchase category
 	 * @return {Promise<Array>} Array of objects, each containing a vessel
 	 */
-	async prcAllocProcurement(vessel) {
+	async prcAllocProcurement(vessel, category, users) {
 		console.log("Start POST request for PRC Allocation...");
 		console.time("PRC allocation POST request");
 
 		// convert the array of vessel names to string of IDs
 		// TODO calling the same endpoint twice? cah...
-		let vslObjectIds = await this.vesselNamesToIds(vessel);
+		let vslObjectIds = await this.vesselNamesToObjectIds(vessel);
 		let vslAllocIds = await this.vesselNamesToAllocIds(vessel);
+		let vslIds = await this.vesselNamesToIds(vessel);
 
-		// TODO get users by ID
-		// TODO
+		// get users by ID
+		let usersIds = await this.userNamesToIds(users);
 
 		// TODO get roles by ID
 		// TODO
 
-		// TODO get ApprovalTemplateID
-		// TODO
+		// TODO get category by ID
+		let catId = await this.categoriesNamesToIds(category);
 
-		// TODO get ApprovalCycleTemplateId
-		// TODO
+		// TODO get ApprovalTemplateID and ApprovalCycleTemplateId
+		let approvalsIds = await this.getPRCtemplateIds(vslIds, vslObjectIds, catId);
+
+		console.log(approvalsIds.ApprovalCycleTemplateId);
+		console.log(approvalsIds.ApprovalTemplateId);
 
 		// build the Form body
 		let bodyFormData = new FormData();
 		bodyFormData.append("sort", "");
 		bodyFormData.append("group", "");
 		bodyFormData.append("filter", "");
-		bodyFormData.append("ApprovalCycleTemplateId", 201177); // TODO method to replace name with number
-		bodyFormData.append("ApprovalTemplateId", 201178); // TODO method to replace name with number
+		bodyFormData.append("ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`); // TODO method to replace name with number
+		bodyFormData.append("ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`); // TODO method to replace name with number
 		bodyFormData.append("VesselId", "");
 		bodyFormData.append("VesselObjectId", vslObjectIds);
-		bodyFormData.append("CategoryId", 0);
+		bodyFormData.append("CategoryId", catId); // TODO method to replace name with number
 		bodyFormData.append("DocType", "PROC");
 		bodyFormData.append("models[0].Id", 23); // TODO get role ID by name
 		bodyFormData.append("models[0].Code", 23); // TODO get role ID by name
@@ -418,13 +443,13 @@ export default class PALAPI {
 		bodyFormData.append("models[0].ModifiedOn", "");
 		bodyFormData.append("models[0].ModifiedBy", "");
 		bodyFormData.append("models[0].NewModifiedOn", "");
-		bodyFormData.append("models[0].UserIds", "145595"); // TODO method to replace names with numbers
+		bodyFormData.append("models[0].UserIds", usersIds);
 		bodyFormData.append("models[0].UserNames", "");
 		bodyFormData.append("models[0].VesselAllocationId", vslAllocIds);
 		bodyFormData.append("models[0].VesselId", 0);
 		bodyFormData.append("models[0].VesselObjectId", 0);
-		bodyFormData.append("models[0].ApprovalCycleTemplateId", 201177); // TODO method to replace name with number
-		bodyFormData.append("models[0].ApprovalTemplateId", 201178); // TODO method to replace name with number
+		bodyFormData.append("models[0].ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`); // TODO method to replace name with number
+		bodyFormData.append("models[0].ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`); // TODO method to replace name with number
 		bodyFormData.append("models[0].StopProcess", "");
 		bodyFormData.append("models[0].SNo", "");
 
@@ -463,7 +488,7 @@ export default class PALAPI {
 
 	/**
 	 * Gets all the Purchase users in PAL
-	 * @return {Promise<Array>} Array of objects, each containing a user
+	 * @return {Promise<Object[]>} Array of objects, each containing a user
 	 */
 	async getPRCusers() {
 		console.log("Start POST request for Purchase users...");
@@ -506,7 +531,7 @@ export default class PALAPI {
 	}
 
 	/**
-	 * Transforms an array of usernames to a string of Ids to be used in other allocation methods
+	 * Transforms an array/string of usernames to a string of Ids to be used in other allocation methods
 	 * @param {Array<string>} userNames String or array of users names: ["Bogdan", "Yaniv"]
 	 * @return {Promise<string>} String of user IDs: "1126,1114"
 	 */
@@ -530,6 +555,46 @@ export default class PALAPI {
 		});
 		userIds = userIds.slice(0, -1);
 		return userIds;
+	}
+
+	/**
+	 * Get the ApprovalCycleTemplateId and ApprovalTemplateId for given vessel and PRC category
+	 * @param {number} vesselId VesselId
+	 * @param {number} vesselObjectId VesselObjectId
+	 * @param {number} categoryId CategoryId
+	 * @return {Promise<Object{ApprovalCycleTemplateId, ApprovalTemplateId}>}
+	 */
+	async getPRCtemplateIds(vesselId, vesselObjectId, categoryId) {
+		console.log("Start request for PRC template IDs...");
+		console.time("Purchase template IDs request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("VesselId", vesselId);
+		bodyFormData.append("VesselObjectId", vesselObjectId);
+		bodyFormData.append("CategoryId", categoryId);
+		bodyFormData.append("DocType", "PROC");
+		bodyFormData.append("CycleTemplateId", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetFunctionalRoleDetails",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got response for PRC template IDs");
+		console.timeEnd("Purchase template IDs request");
+		// return response.data.Data[0];
+		return { ApprovalCycleTemplateId: response.data.Data[0].ApprovalCycleTemplateId, ApprovalTemplateId: response.data.Data[0].ApprovalTemplateId };
 	}
 }
 
