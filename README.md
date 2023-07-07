@@ -18,7 +18,10 @@ import PALAPI from "pal-e3";
 ```
 
 Create a new object using the PALAPI class
-`const palapi = new PALAPI();`
+
+```js
+const palapi = new PALAPI();
+```
 
 Set the PAL URL, username and password. Use something like [dontenv](https://www.npmjs.com/package/dotenv) preferably.
 
@@ -52,6 +55,15 @@ Any other API call method from `palapi` needs to be called inside the `async` fu
 ### Getting all requsitions for given vessels and Purchase cateogries
 
 ```js
+import * as PAL from "pal-e3";
+import PALAPI from "pal-e3";
+
+const palapi = new PALAPI();
+
+palapi.url = "https://...";
+palapi.user = "user_name";
+palapi.password = "passw0rd";
+
 const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
