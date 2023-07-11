@@ -189,7 +189,3 @@ All available data manipulation functions can be accessed from the `PAL` object 
 
 - `purchaseAllocation` method now supports JOB allocations
 - `getPRCtemplateIds` renamed to `getCurrentPRCallocation` as it's a more accurate name
-
-### To do
-
-- MDM Crewing Vessel User Allocation (Crewing Oficer - Incidental Expense, Appraisal)
