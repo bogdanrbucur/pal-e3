@@ -451,7 +451,7 @@ export default class PALAPI {
 		switch (docType) {
 			case "PROC":
 				// call getPRCtemplateIds without ApprovalCycleTemplateId, as it's only required for JOB document types
-				approvalsIds = await this.getPRCtemplateIds(docType, vslIds, vslObjectIds, catId);
+				approvalsIds = await this.getCurrentPRCallocation(docType, vslIds, vslObjectIds, catId);
 
 				ApprovalTemplateId = approvalsIds.ApprovalTemplateId;
 				ApprovalCycleTemplateId = approvalsIds.ApprovalCycleTemplateId;
@@ -474,7 +474,7 @@ export default class PALAPI {
 				}
 
 				// call getPRCtemplateIds with ApprovalCycleTemplateId, as it's required for JOB document types
-				approvalsIds = await this.getPRCtemplateIds(docType, vslIds, vslObjectIds, catId, ApprovalCycleTemplateId);
+				approvalsIds = await this.getCurrentPRCallocation(docType, vslIds, vslObjectIds, catId, ApprovalCycleTemplateId);
 
 				VesselAllocationId = approvalsIds.VesselAllocationId;
 				break;
@@ -561,14 +561,10 @@ export default class PALAPI {
 		// if any error exists, return false
 		if (response.data.Errors !== null) return false;
 		// return response.data;
-		return this.isPRCallocSuccessful(
-			response.data.Data,
-			approvalsIds.ApprovalCycleTemplateId,
-			approvalsIds.ApprovalTemplateId,
-			roleCode,
-			usersIds,
-			approvalsIds.VesselAllocationId
-		);
+
+		// TODO the response is "" users for JOB doc types
+		// TODO need to validate this as well. Another API call?
+		return this.isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, roleId, usersIds, VesselAllocationId, vslIds);
 	}
 
 	/**
@@ -653,7 +649,7 @@ export default class PALAPI {
 	 * @param {number} categoryId CategoryId
 	 * @return {Promise<Object{ApprovalCycleTemplateId, ApprovalTemplateId, VesselAllocationId, roles[]}>}
 	 */
-	async getPRCtemplateIds(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId = "") {
+	async getCurrentPRCallocation(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId = "") {
 		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
 
 		console.log("Start request for PRC template IDs...");
@@ -703,8 +699,9 @@ export default class PALAPI {
 	 * @param {number} VesselAllocationId
 	 * @return {boolean}
 	 */
-	isPRCallocSuccessful(response, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId) {
+	async isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId, vesselId) {
 		let valid = false;
+		let response = await this.getCurrentPRCallocation(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId);
 
 		// make an array from the provided user IDs
 		let UserIdsArray = UserIds.split(",");
