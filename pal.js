@@ -569,8 +569,8 @@ export default class PALAPI {
 	 * @return {Promise<Object[]>} Array of objects, each containing a user
 	 */
 	async getUsers() {
-		console.log("Start POST request for Purchase users...");
-		console.time("Purchase users request");
+		console.log("Start request for users...");
+		console.time("Users request");
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -602,9 +602,9 @@ export default class PALAPI {
 		};
 
 		let response = await axios.request(options);
-		console.log("Got POST response for Purchase users");
+		console.log("Got response for users");
 		console.log(`${response.data.Total} users received`);
-		console.timeEnd("Purchase users request");
+		console.timeEnd("Users request");
 		return response.data.Data;
 	}
 
@@ -1099,7 +1099,16 @@ export default class PALAPI {
 		}
 	}
 
+	/**
+	 * Replace current Crew process allocation for the vessel and role
+	 * @param {string} vessel
+	 * @param {string} process
+	 * @param {string} role
+	 * @param {string | Array<string>} inputUsers Users not in the array will be removed
+	 * @return {Promise<boolean>} success or not
+	 */
 	async crewAllocation(vessel, process, role, inputUsers) {
+		console.time("Crew allocation");
 		// If only one users is given, make it an array
 		if (typeof inputUsers === "string") inputUsers = [`${inputUsers}`];
 
@@ -1124,7 +1133,6 @@ export default class PALAPI {
 		let rolesResponse = await this.getAllocatedUsers(vslId, vslObjectId, processId);
 		let allRolesResponse = await this.getCrewingRoles();
 
-		// TODO cannot get the role... duh need all roles
 		// get roleId
 		let roleId;
 		allRolesResponse.forEach((resRole) => {
@@ -1139,6 +1147,18 @@ export default class PALAPI {
 		// Run through each already allocated user and check if it's in the input list
 		// Add them to the list of users to be removed
 		let usersToRemove = [];
+
+		// * if all users need to be removed, i.e. inputUsers = ""
+		if (inputUsers.length === 1 && inputUsers[0] === "") {
+			console.log(`Will remove all users from role ${role.toUpperCase()}`);
+			rolesResponse.forEach((allocatedUser) => {
+				if (allocatedUser.Name.toUpperCase() === role.toUpperCase()) usersToRemove.push(allocatedUser);
+			});
+			// empty the array so the next functions don't run
+			inputUsers.pop();
+		}
+
+		// * if inputUsers is something...
 		rolesResponse.forEach((allocatedUser) => {
 			const isMatch = inputUsers.some((word) => allocatedUser.UserNames.toUpperCase().includes(word.toUpperCase()));
 			if (!isMatch && allocatedUser.Name.toUpperCase() === role.toUpperCase()) {
@@ -1149,53 +1169,57 @@ export default class PALAPI {
 		let succesful = false;
 
 		// Remove the users on the list
-		usersToRemove.forEach(async (user) => {
+		for (const user of usersToRemove) {
 			console.log(`Removing user ${user.UserNames}`);
 			succesful = await this.removeCrewingAllocation(user.FId);
-		});
+		}
 
-		// TODO run through each input user and check if already allocated
 		// get updated allocation if any user was removed
-		// ! wtf is this true?! 
-		if (usersToRemove !== []) {
+		if (usersToRemove.length !== 0) {
+			console.log("Users removed, updating allocated users");
 			rolesResponse = await this.getAllocatedUsers(vslId, vslObjectId, processId);
-			console.log("Users removed, so allocated users updated.")
 		}
 
 		// Run through each already allocated user and check if it's in the input list
 		// Add them to the list of users to be added
-
 		let usersToAdd = [];
 
-		// ! some shit stuck here
 		inputUsers.forEach((user) => {
+			// assume the user needs to be added
+			let needToAddUser = true;
+
 			rolesResponse.forEach((allocatedUser) => {
-				if (!allocatedUser.UserNames.toUpperCase().includes(user.toUpperCase()) && allocatedUser.UserNames.toUpperCase() === role.toUpperCase()) {
-					usersToAdd.push(user);
-					console.log(`User ${user} will be added`);
-				}
+				// if the user is already allocated in the same role, no need to add him/her
+				if (allocatedUser.UserNames.toUpperCase().includes(user.toUpperCase()) && allocatedUser.Name.toUpperCase() === role.toUpperCase()) needToAddUser = false;
 			});
+			if (needToAddUser) {
+				// only add the user once
+				if (!usersToAdd.includes(user)) {
+					usersToAdd.push(user);
+					console.log(`User ${user} will be added as ${role.toUpperCase()}`);
+				}
+			} else {
+				console.log(`User ${user} already assigned in ${role.toUpperCase()} role`);
+				succesful = true;
+			}
 		});
 
-		// rolesResponse.forEach((allocatedUser) => {
-		// 	console.log(allocatedUser.UserNames);
-		// 	const isMatch = inputUsers.some((word) => allocatedUser.UserNames.toUpperCase().includes(word.toUpperCase()));
-		// 	if (!isMatch && allocatedUser.Name.toUpperCase() === role.toUpperCase()) {
-		// 		usersToAdd.push({userIds: , UserNames: });
-		// 	}
-		// });
-
-		// TODO if not allocated, allocate it
-		usersToAdd.forEach(async (user) => {
+		// allocate the users
+		for (const user of usersToAdd) {
 			// get 2 strings: id and username
 			let users = await this.usersToIdAndUserName(user);
-			console.log(`Adding user ${users.username}...`);
+			console.log(`Adding user ${users.username} in ${role.toUpperCase()} role...`);
 			succesful = await this.addCrewAllocation(roleId, users.id, users.username, vslId, vslObjectId, processId);
-		});
+		}
 
+		console.timeEnd("Crew allocation");
 		return succesful;
 	}
 
+	/**
+	 * Gets all the roles in Crewing
+	 * @return {Promise<Object[]>} Array of objects, each containing a role
+	 */
 	async getCrewingRoles() {
 		console.log("Start request for Crewing roles...");
 		console.time("Crewing roles request");
