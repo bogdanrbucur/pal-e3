@@ -637,7 +637,7 @@ export default class PALAPI {
 	}
 
 	/**
-	 * Get the necessary IDs required for allocation for given vessel and PRC category
+	 * Get the current Purchase allocation
 	 * @param {string} docType "PROC" or "JOB"
 	 * @param {number} vesselId VesselId
 	 * @param {number} vesselObjectId VesselObjectId
