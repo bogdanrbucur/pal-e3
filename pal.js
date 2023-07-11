@@ -764,6 +764,102 @@ export default class PALAPI {
 		// return response.data.Data[0];
 		return response.data.Data;
 	}
+
+	// TODO JSDoc
+	async voyageAlertConfig(vessel, role, users) {
+		console.log("Start request for Voyage Alert Config...");
+		console.time("Voyage Alert Config request");
+
+		// TODO calling the same API twice? ew...
+		let vslId = await this.vesselNamesToIds(vessel);
+		let vslObjectId = await this.vesselNamesToObjectIds(vessel);
+		let userIds = await this.userNamesToIds(users);
+		let rolesResponse = await this.getVoyAlertRoles(vslId, vslObjectId);
+
+		// get roleCode
+		let roleId;
+		rolesResponse.forEach((responseRole) => {
+			if (responseRole.AlertRoleName.toUpperCase() === role.toUpperCase()) {
+				roleId = responseRole.AlertRoleId;
+			}
+		});
+		if (roleId === undefined) {
+			throw new Error("Role not found!");
+		}
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("VesselId", vslId);
+		bodyFormData.append("VesselObjectId", vslObjectId);
+		bodyFormData.append("models[0].VessleId", 0);
+		bodyFormData.append("models[0].VessleObjectId", 0);
+		bodyFormData.append("models[0].AlertRoleName", "");
+		bodyFormData.append("models[0].AlertRoleId", roleId);
+		bodyFormData.append("models[0].UserIds", userIds);
+		bodyFormData.append("models[0].UserNames", "");
+		bodyFormData.append("models[0].SelectedUserIds", "");
+		bodyFormData.append("models[0].RemovedUserIds", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palvoyage/VoyagePAL/AllocateRoles/InsertAllocateRoles",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got response for Voyage Alert Config");
+		console.timeEnd("Voyage Alert Config request");
+
+		if (response.data.isSuccess) {
+			return response.data.isSuccess;
+		} else {
+			throw new Error("Voyage User Alert Configuration allocation failed!");
+		}
+	}
+
+	// TODO JSDoc
+	async getVoyAlertRoles(vslId, vslObjectId) {
+		console.log("Start request for Voyage alert roles...");
+		console.time("Voyage alert roles request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("VesselId", vslId);
+		bodyFormData.append("VesselObjectId", vslObjectId);
+		bodyFormData.append("CategoryId", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palvoyage/VoyagePAL/AllocateRoles/GetAllocateRoles",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got response for Voyage alert roles");
+		console.timeEnd("Voyage alert roles request");
+
+		if (response.data.Data) {
+			return response.data.Data;
+		} else {
+			throw new Error("Failed to retrieve Voyage User Alert Configuration roles!");
+		}
+	}
 }
 
 export * from "./parse.js";
