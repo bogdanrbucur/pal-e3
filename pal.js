@@ -325,6 +325,7 @@ export default class PALAPI {
 			vesselsIds += vsl.VesselObjectId += ",";
 		});
 		vesselsIds = vesselsIds.slice(0, -1);
+		if (vesselsIds === "") throw new Error("Vessel not found!");
 		return vesselsIds;
 	}
 
@@ -345,6 +346,7 @@ export default class PALAPI {
 			vesselsIds += vsl.VesselId += ",";
 		});
 		vesselsIds = vesselsIds.slice(0, -1);
+		if (vesselsIds === "") throw new Error("Vessel not found!");
 		return vesselsIds;
 	}
 
