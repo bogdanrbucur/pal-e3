@@ -619,9 +619,7 @@ export default class PALAPI {
 		let users = await this.getUsers();
 
 		// if input is string, make an array of one item and continue
-		if (typeof usr == "string") {
-			usr = [`${usr}`];
-		}
+		if (typeof usr == "string") usr = [`${usr}`];
 
 		let filteredUsers = [];
 		users.forEach((user) => {
@@ -879,53 +877,54 @@ export default class PALAPI {
 	}
 
 	/**
-	 * Replace current MDM Crewing Vessel User Allocation
-	 * @param {string} vessel
-	 * @param {string} role
-	 * @param {string} users Only accepts one user
+	 * Add user to MDM Crewing Vessel User Allocation
+	 * @param {number} roleId
+	 * @param {number} userIds
+	 * @param {string} userName
+	 * @param {number} vslId
+	 * @param {number} vslObjectId
+	 * @param {number} processId
 	 * @return {Promise<boolean>} success or not
 	 */
-	async crewAllocation(vessel, process, role, user) {
-		console.log("Start request for Voyage Alert Config...");
-		console.time("Voyage Alert Config request");
+	async addCrewAllocation(roleId, userIds, userName, vslId, vslObjectId, processId) {
+		console.log("Start request for adding crew allocation...");
+		console.time("Adding crew allocation request");
 
-		if (typeof user !== "string") throw new Error("Only one user at a time can be allocated!");
+		// // TODO calling the same API twice? ew...
+		// let vslId = await this.vesselNamesToIds(vessel);
+		// let vslObjectId = await this.vesselNamesToObjectIds(vessel);
 
-		// TODO calling the same API twice? ew...
-		let vslId = await this.vesselNamesToIds(vessel);
-		let vslObjectId = await this.vesselNamesToObjectIds(vessel);
+		// // get 2 strings: id and username
+		// let users = await this.usersToIdAndUserName(user);
+		// let userIds = users.id;
+		// let userName = users.username;
 
-		// get 2 strings: id and username
-		let users = await this.usersToIdAndUserName(user);
-		let userIds = users.id;
-		let userName = users.username;
+		// // get process ID
+		// let processesReponse = await this.getCrewingProcesses();
 
-		// get process ID
-		let processesReponse = await this.getCrewingProcesses();
+		// let processId;
+		// processesReponse.forEach((resProc) => {
+		// 	if (resProc.Name.toUpperCase() === process.toUpperCase()) {
+		// 		processId = resProc.Id;
+		// 	}
+		// });
+		// if (processId === undefined) {
+		// 	throw new Error("Process not found!");
+		// }
 
-		let processId;
-		processesReponse.forEach((resProc) => {
-			if (resProc.Name.toUpperCase() === process.toUpperCase()) {
-				processId = resProc.Id;
-			}
-		});
-		if (processId === undefined) {
-			throw new Error("Process not found!");
-		}
+		// // get crew roles and ID
+		// let rolesResponse = await this.getCrewingRoles(vslId, vslObjectId, processId);
 
-		// get crew roles and ID
-		let rolesResponse = await this.getCrewingRoles(vslId, vslObjectId, processId);
-
-		// get roleId
-		let roleId;
-		rolesResponse.forEach((resRole) => {
-			if (resRole.Text.toUpperCase() === role.toUpperCase()) {
-				roleId = resRole.Value;
-			}
-		});
-		if (roleId === undefined) {
-			throw new Error("Role not found!");
-		}
+		// // get roleId
+		// let roleId;
+		// rolesResponse.forEach((resRole) => {
+		// 	if (resRole.Name.toUpperCase() === role.toUpperCase()) {
+		// 		roleId = resRole.Id;
+		// 	}
+		// });
+		// if (roleId === undefined) {
+		// 	throw new Error("Role not found!");
+		// }
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -973,8 +972,8 @@ export default class PALAPI {
 		};
 
 		let response = await axios.request(options);
-		console.log("Got response for Voyage Alert Config");
-		console.timeEnd("Voyage Alert Config request");
+		console.log("Got response for adding crew allocation");
+		console.timeEnd("Adding crew allocation request");
 
 		if (response.data.Errors) throw new Error("Crewing process user allocation failed!");
 		if (response.data === "") {
@@ -1029,20 +1028,23 @@ export default class PALAPI {
 	 * @param {number} processId
 	 * @return {Promise<Object[]>} Array of Voyage alert role objects
 	 */
-	async getCrewingRoles(VesselId, VesselObjectId, processId) {
-		console.log("Start request for Crewing roles...");
-		console.time("Crewing roles request");
+	async getAllocatedUsers(VesselId, VesselObjectId, processId) {
+		console.log("Start request for allocated Crewing users...");
+		console.time("Allocated Crewing users request");
 
 		// build the Form body
 		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("ProcessId", processId);
 		bodyFormData.append("VesselId", VesselId);
 		bodyFormData.append("VesselObjectId", VesselObjectId);
 		bodyFormData.append("companyId", 1);
-		bodyFormData.append("ProcessId", processId);
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/AllocationOfVessel/GetFunctionalRoleDropdownDetails",
+			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/AllocationOfVessel/GetFunctionalRoleDetails",
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -1052,20 +1054,20 @@ export default class PALAPI {
 		};
 
 		let response = await axios.request(options);
-		console.log("Got response for Crewing roles");
-		console.timeEnd("Crewing roles request");
+		console.log("Got response for allocated Crewing users");
+		console.timeEnd("Allocated Crewing users request");
 
-		if (response.data[0]) {
-			return response.data;
+		if (response.data.Data) {
+			return response.data.Data;
 		} else {
-			throw new Error("Failed to retrieve Crewing roles!");
+			throw new Error("Failed to retrieve allocated Crewing users!");
 		}
 	}
 
 	/**
 	 * Remove MDM Crewing user from given fid
 	 * @param {number} fid
-	 * @return {Promise<Object[]>} Array of Voyage alert role objects
+	 * @return {Promise<boolean>} success or not
 	 */
 	async removeCrewingAllocation(fid) {
 		console.log("Start request for removing Crewing allocation...");
@@ -1094,6 +1096,137 @@ export default class PALAPI {
 			return response.data.success;
 		} else {
 			throw new Error("Failed to remove Crewing allocation!");
+		}
+	}
+
+	async crewAllocation(vessel, process, role, inputUsers) {
+		// If only one users is given, make it an array
+		if (typeof inputUsers === "string") inputUsers = [`${inputUsers}`];
+
+		// TODO calling the same API twice? ew...
+		let vslId = await this.vesselNamesToIds(vessel);
+		let vslObjectId = await this.vesselNamesToObjectIds(vessel);
+
+		// get process ID
+		let processesReponse = await this.getCrewingProcesses();
+
+		let processId;
+		processesReponse.forEach((resProc) => {
+			if (resProc.Name.toUpperCase() === process.toUpperCase()) {
+				processId = resProc.Id;
+			}
+		});
+		if (processId === undefined) {
+			throw new Error("Process not found!");
+		}
+
+		// get crew roles and ID
+		let rolesResponse = await this.getAllocatedUsers(vslId, vslObjectId, processId);
+		let allRolesResponse = await this.getCrewingRoles();
+
+		// TODO cannot get the role... duh need all roles
+		// get roleId
+		let roleId;
+		allRolesResponse.forEach((resRole) => {
+			if (resRole.Name.toUpperCase() === role.toUpperCase()) {
+				roleId = resRole.Id;
+			}
+		});
+		if (roleId === undefined) {
+			throw new Error("Role not found!");
+		}
+
+		// Run through each already allocated user and check if it's in the input list
+		// Add them to the list of users to be removed
+		let usersToRemove = [];
+		rolesResponse.forEach((allocatedUser) => {
+			const isMatch = inputUsers.some((word) => allocatedUser.UserNames.toUpperCase().includes(word.toUpperCase()));
+			if (!isMatch && allocatedUser.Name.toUpperCase() === role.toUpperCase()) {
+				usersToRemove.push(allocatedUser);
+				console.log(`User ${allocatedUser.UserNames} will be removed`);
+			}
+		});
+		let succesful = false;
+
+		// Remove the users on the list
+		usersToRemove.forEach(async (user) => {
+			console.log(`Removing user ${user.UserNames}`);
+			succesful = await this.removeCrewingAllocation(user.FId);
+		});
+
+		// TODO run through each input user and check if already allocated
+		// get updated allocation if any user was removed
+		// ! wtf is this true?! 
+		if (usersToRemove !== []) {
+			rolesResponse = await this.getAllocatedUsers(vslId, vslObjectId, processId);
+			console.log("Users removed, so allocated users updated.")
+		}
+
+		// Run through each already allocated user and check if it's in the input list
+		// Add them to the list of users to be added
+
+		let usersToAdd = [];
+
+		// ! some shit stuck here
+		inputUsers.forEach((user) => {
+			rolesResponse.forEach((allocatedUser) => {
+				if (!allocatedUser.UserNames.toUpperCase().includes(user.toUpperCase()) && allocatedUser.UserNames.toUpperCase() === role.toUpperCase()) {
+					usersToAdd.push(user);
+					console.log(`User ${user} will be added`);
+				}
+			});
+		});
+
+		// rolesResponse.forEach((allocatedUser) => {
+		// 	console.log(allocatedUser.UserNames);
+		// 	const isMatch = inputUsers.some((word) => allocatedUser.UserNames.toUpperCase().includes(word.toUpperCase()));
+		// 	if (!isMatch && allocatedUser.Name.toUpperCase() === role.toUpperCase()) {
+		// 		usersToAdd.push({userIds: , UserNames: });
+		// 	}
+		// });
+
+		// TODO if not allocated, allocate it
+		usersToAdd.forEach(async (user) => {
+			// get 2 strings: id and username
+			let users = await this.usersToIdAndUserName(user);
+			console.log(`Adding user ${users.username}...`);
+			succesful = await this.addCrewAllocation(roleId, users.id, users.username, vslId, vslObjectId, processId);
+		});
+
+		return succesful;
+	}
+
+	async getCrewingRoles() {
+		console.log("Start request for Crewing roles...");
+		console.time("Crewing roles request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("page", 1);
+		bodyFormData.append("pageSize", 100);
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/FunctionalRoles/GetFunctionalRolesData",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got response for Crewing roles");
+		console.timeEnd("Crewing roles request");
+
+		if (response.data.Data) {
+			return response.data.Data;
+		} else {
+			throw new Error("Failed to retrieve Crewing roles!");
 		}
 	}
 }
