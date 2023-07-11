@@ -158,6 +158,7 @@ All available data manipulation functions can be accessed from the `PAL` object 
 ### Release notes 1.3.0
 
 - `voyageAlertConfig` method now for Voyage User Alert Configuration
+- `getPRCusers` renamed to `getUsers` as the name is more accurate
 
 ### Release notes 1.2.0
 
