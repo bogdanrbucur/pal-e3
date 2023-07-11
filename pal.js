@@ -767,7 +767,13 @@ export default class PALAPI {
 		return response.data.Data;
 	}
 
-	// TODO JSDoc
+	/**
+	 * Replace current Voyage User Alert Configuration
+	 * @param {string} vessel
+	 * @param {string} role
+	 * @param {string | string[]} users
+	 * @return {Promise<boolean>} success or not
+	 */
 	async voyageAlertConfig(vessel, role, users) {
 		console.log("Start request for Voyage Alert Config...");
 		console.time("Voyage Alert Config request");
@@ -827,7 +833,12 @@ export default class PALAPI {
 		}
 	}
 
-	// TODO JSDoc
+	/**
+	 * Get all the Voyage alert roles
+	 * @param {number} vslId
+	 * @param {number} vslObjectId
+	 * @return {Promise<Object[]>} Array of Voyage alert role objects
+	 */
 	async getVoyAlertRoles(vslId, vslObjectId) {
 		console.log("Start request for Voyage alert roles...");
 		console.time("Voyage alert roles request");

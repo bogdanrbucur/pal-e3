@@ -125,7 +125,7 @@ console.log(jobAllocation); // true if succesful
 main();
 ```
 
-#### Assigning Bogdan in Technical Supt alert role in Voyage User Alert Configuration for Chem Polaris
+#### Assigning Bogdan and Marius in Technical Supt alert role in Voyage User Alert Configuration for Chem Polaris
 
 ```js
 import * as PAL from "pal-e3";
@@ -140,7 +140,7 @@ palapi.password = "passw0rd";
 const main = async () => {
 await palapi.getCookie();
 
-let voyAloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", "bogdan");
+let voyAloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
 console.log(voyAloc); // true if succesful
 };
 
