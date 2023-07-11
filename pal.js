@@ -124,7 +124,7 @@ export default class PALAPI {
 		let vesslesIdsString = await this.vesselNamesToObjectIds(vessels);
 
 		// convert the array of vessel names to string of IDs
-		let catoriesIds = await this.categoriesNamesToIds(categories);
+		let catoriesIds = await this.categoriesNamesToIds(categories, docType);
 
 		// build the Form body
 		let body = new FormData();
@@ -350,19 +350,21 @@ export default class PALAPI {
 
 	/**
 	 * Gets all the vessels in PAL
+	 * @param
 	 * @return {Promise<Array>} Array of objects, each containing a Purchase category
 	 */
-	async getPurchaseCategories() {
+	async getPurchaseCategories(docType) {
+		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
 		console.log("Start POST request for Purchase categories...");
 		console.time("Purchase categories POST request");
 
 		// build the Form body
 		let bodyFormData = new FormData();
-		bodyFormData.append("OpertionType", "PROC");
+		bodyFormData.append("OpertionType", `${docType}`);
 		bodyFormData.append("filter[logic]", "and");
 		bodyFormData.append("filter[filters][0][field]", "Value");
 		bodyFormData.append("filter[filters][0][operator]", "eq");
-		bodyFormData.append("filter[filters][0][value]", "PROC");
+		bodyFormData.append("filter[filters][0][value]", `${docType}`);
 
 		let options = {
 			method: "POST",
@@ -384,9 +386,10 @@ export default class PALAPI {
 	/**
 	 * Transforms an array of Purchase categories names to a string of IDs to be used in other methods
 	 * @param {array} myVessels Array of Purchase categories names: ["MEDICINE", "PROVISIONS"]
+	 * @param {string} docType "PROC" or "JOB"
 	 * @return {Promise<string>} List of Ids as string: "201205,201184"
 	 */
-	async categoriesNamesToIds(categoriesArray) {
+	async categoriesNamesToIds(categoriesArray, docType) {
 		// Select Any is category 0
 		if (typeof categoriesArray === "string" && categoriesArray.toUpperCase() === "SELECT ANY") return 0;
 
@@ -394,7 +397,7 @@ export default class PALAPI {
 		if (typeof categoriesArray === "string") categoriesArray = categoriesArray.toUpperCase();
 		else categoriesArray = categoriesArray.map((cat) => cat.toUpperCase());
 
-		let categories = await this.getPurchaseCategories();
+		let categories = await this.getPurchaseCategories(docType);
 		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text.toUpperCase()));
 		let categoriesString = "";
 		filteredCategories.forEach((cat) => {
@@ -413,10 +416,12 @@ export default class PALAPI {
 	 * @param {string} category Name of Purchase category
 	 * @param {string} role Name of Purchase role
 	 * @param {Array<string>} users Array of users to be assigned to the role
+	 * @param {string} template Name of Cycle Template. Needed only for document type JOB
 	 * @return {Promise<boolean>} If succesful or not
 	 */
-	async purchaseAllocation(docType, vessel, category, role, users) {
+	async purchaseAllocation(docType, vessel, category, role, users, template) {
 		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
+		if (docType === "JOB" && template == null) throw new Error("Approval template is mandatory for JOB document type!");
 
 		console.log("Start POST request for PRC Allocation...");
 		console.time("PRC allocation POST request");
@@ -432,11 +437,48 @@ export default class PALAPI {
 		console.log(`UsersIds: ${usersIds}`);
 
 		// get category by ID
-		let catId = await this.categoriesNamesToIds(category);
+		let catId = await this.categoriesNamesToIds(category, docType);
 		console.log(`CategoryId: ${catId}`);
 
-		// get ApprovalTemplateID and ApprovalCycleTemplateId
-		let approvalsIds = await this.getPRCtemplateIds(vslIds, vslObjectIds, catId);
+		// Define ApprovalCycleTemplateId and ApprovalTemplateId depending on the document type
+		let approvalsIds;
+		let ApprovalCycleTemplateId;
+		let ApprovalTemplateId;
+		let VesselAllocationId;
+		switch (docType) {
+			case "PROC":
+				// call getPRCtemplateIds without ApprovalCycleTemplateId, as it's only required for JOB document types
+				approvalsIds = await this.getCurrentPRCallocation(docType, vslIds, vslObjectIds, catId);
+
+				ApprovalTemplateId = approvalsIds.ApprovalTemplateId;
+				ApprovalCycleTemplateId = approvalsIds.ApprovalCycleTemplateId;
+				VesselAllocationId = approvalsIds.VesselAllocationId;
+				break;
+			case "JOB":
+				ApprovalTemplateId = 0;
+
+				// Get the Cycle Templates IDs if allocating to JOB document type
+				let cycleTemplates = await this.getPRCcycleTemplateIds();
+
+				// get ApprovalCycleTemplateId from the template name
+				cycleTemplates.forEach((ct) => {
+					if (ct.Name.toUpperCase() === template.toUpperCase()) {
+						ApprovalCycleTemplateId = ct.Id;
+					}
+				});
+				if (ApprovalCycleTemplateId === undefined) {
+					throw new Error("Cycle template not found!");
+				}
+
+				// call getPRCtemplateIds with ApprovalCycleTemplateId, as it's required for JOB document types
+				approvalsIds = await this.getCurrentPRCallocation(docType, vslIds, vslObjectIds, catId, ApprovalCycleTemplateId);
+
+				VesselAllocationId = approvalsIds.VesselAllocationId;
+				break;
+
+			default:
+				break;
+		}
 
 		// get roleCode
 		let roleCode;
@@ -460,9 +502,9 @@ export default class PALAPI {
 			throw new Error("Role not found!");
 		}
 
-		console.log(`ApprovalCycleTemplateId: ${approvalsIds.ApprovalCycleTemplateId}`);
-		console.log(`ApprovalTemplateId: ${approvalsIds.ApprovalTemplateId}`);
-		console.log(`VesselAllocationId: ${approvalsIds.VesselAllocationId}`);
+		console.log(`ApprovalCycleTemplateId: ${ApprovalCycleTemplateId}`);
+		console.log(`ApprovalTemplateId: ${ApprovalTemplateId}`);
+		console.log(`VesselAllocationId: ${VesselAllocationId}`);
 		console.log(`RoleCode: ${roleCode}`);
 		console.log(`RoleId: ${roleId}`);
 
@@ -471,8 +513,8 @@ export default class PALAPI {
 		bodyFormData.append("sort", "");
 		bodyFormData.append("group", "");
 		bodyFormData.append("filter", "");
-		bodyFormData.append("ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`);
-		bodyFormData.append("ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`);
+		bodyFormData.append("ApprovalCycleTemplateId", `${ApprovalCycleTemplateId}`);
+		bodyFormData.append("ApprovalTemplateId", `${ApprovalTemplateId}`);
 		bodyFormData.append("VesselId", "");
 		bodyFormData.append("VesselObjectId", vslObjectIds);
 		bodyFormData.append("CategoryId", catId);
@@ -489,11 +531,11 @@ export default class PALAPI {
 		bodyFormData.append("models[0].NewModifiedOn", "");
 		bodyFormData.append("models[0].UserIds", usersIds);
 		bodyFormData.append("models[0].UserNames", "");
-		bodyFormData.append("models[0].VesselAllocationId", `${approvalsIds.VesselAllocationId}`);
+		bodyFormData.append("models[0].VesselAllocationId", `${VesselAllocationId}`);
 		bodyFormData.append("models[0].VesselId", 0);
 		bodyFormData.append("models[0].VesselObjectId", 0);
-		bodyFormData.append("models[0].ApprovalCycleTemplateId", `${approvalsIds.ApprovalCycleTemplateId}`);
-		bodyFormData.append("models[0].ApprovalTemplateId", `${approvalsIds.ApprovalTemplateId}`);
+		bodyFormData.append("models[0].ApprovalCycleTemplateId", `${ApprovalCycleTemplateId}`);
+		bodyFormData.append("models[0].ApprovalTemplateId", `${ApprovalTemplateId}`);
 		bodyFormData.append("models[0].StopProcess", "");
 		bodyFormData.append("models[0].SNo", "");
 
@@ -515,15 +557,9 @@ export default class PALAPI {
 		// validate the action
 		// if any error exists, return false
 		if (response.data.Errors !== null) return false;
-		// return response.data;
-		return this.isPRCallocSuccessful(
-			response.data.Data,
-			approvalsIds.ApprovalCycleTemplateId,
-			approvalsIds.ApprovalTemplateId,
-			roleCode,
-			usersIds,
-			approvalsIds.VesselAllocationId
-		);
+		// read the current allocation and check if it matches the input
+		let isSuccesful = await this.isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, roleCode, usersIds, VesselAllocationId, vslIds, vslObjectIds, catId);
+		return isSuccesful;
 	}
 
 	/**
@@ -601,15 +637,18 @@ export default class PALAPI {
 	}
 
 	/**
-	 * Get the necessary IDs required for allocation for given vessel and PRC category
+	 * Get the current Purchase allocation
+	 * @param {string} docType "PROC" or "JOB"
 	 * @param {number} vesselId VesselId
 	 * @param {number} vesselObjectId VesselObjectId
 	 * @param {number} categoryId CategoryId
 	 * @return {Promise<Object{ApprovalCycleTemplateId, ApprovalTemplateId, VesselAllocationId, roles[]}>}
 	 */
-	async getPRCtemplateIds(vesselId, vesselObjectId, categoryId) {
-		console.log("Start request for PRC template IDs...");
-		console.time("Purchase template IDs request");
+	async getCurrentPRCallocation(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId = "") {
+		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
+
+		console.log("Start request for current PRC allocation...");
+		console.time("Current PRC allocation request");
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -619,8 +658,8 @@ export default class PALAPI {
 		bodyFormData.append("VesselId", vesselId);
 		bodyFormData.append("VesselObjectId", vesselObjectId);
 		bodyFormData.append("CategoryId", categoryId);
-		bodyFormData.append("DocType", "PROC");
-		bodyFormData.append("CycleTemplateId", "");
+		bodyFormData.append("DocType", `${docType}`);
+		bodyFormData.append("CycleTemplateId", ApprovalCycleTemplateId);
 
 		let options = {
 			method: "POST",
@@ -634,8 +673,8 @@ export default class PALAPI {
 		};
 
 		let response = await axios.request(options);
-		console.log("Got response for PRC template IDs");
-		console.timeEnd("Purchase template IDs request");
+		console.log("Got response for current PRC allocation");
+		console.timeEnd("Current PRC allocation request");
 		// return response.data.Data[0];
 		return {
 			ApprovalCycleTemplateId: response.data.Data[0].ApprovalCycleTemplateId,
@@ -647,21 +686,25 @@ export default class PALAPI {
 
 	/**
 	 * Validate the reponse to check if the PRC allocation was succesful
-	 * @param {Object} reponse
+	 * @param {string} docType
 	 * @param {number} ApprovalCycleTemplateId
 	 * @param {number} ApprovalTemplateId
 	 * @param {number} RoleId
 	 * @param {string} UserIds
 	 * @param {number} VesselAllocationId
-	 * @return {boolean}
+	 * @param {number} vesselId
+	 * @param {number} vesselObjectId
+	 * @param {string} categoryId
+	 * @return {Promise<boolean>}
 	 */
-	isPRCallocSuccessful(response, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId) {
+	async isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId, vesselId, vesselObjectId, categoryId) {
 		let valid = false;
+		let response = await this.getCurrentPRCallocation(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId);
 
 		// make an array from the provided user IDs
 		let UserIdsArray = UserIds.split(",");
 
-		response.forEach((element) => {
+		response.roles.forEach((element) => {
 			// make an array from the server reponse users
 			let responseUserIdsArray = element.UserIds.split(",");
 			let usersValid = false;
@@ -686,6 +729,40 @@ export default class PALAPI {
 			}
 		});
 		return valid;
+	}
+
+	/**
+	 * Get the IDs of all the cycle templates
+	 * @return {Promise<Object[]>}
+	 */
+	async getPRCcycleTemplateIds() {
+		console.log("Start request for PRC cycle template IDs...");
+		console.time("Purchase cycle template IDs request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("page", 1);
+		bodyFormData.append("pageSize", 200);
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "Name~contains~''");
+
+		let options = {
+			method: "POST",
+			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/ProcurementBusinessFlow/GetTemplateDetails",
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.log("Got response for PRC cycle template IDs");
+		console.timeEnd("Purchase cycle template IDs request");
+		// return response.data.Data[0];
+		return response.data.Data;
 	}
 }
 

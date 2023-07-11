@@ -103,6 +103,28 @@ console.log(allocation); // true if succesful
 main();
 ```
 
+#### Remove all users from Chem Polaris, BREAKDOWN JOB category, Breakdown - Normal template, from the Insurance Manager role
+
+```js
+import * as PAL from "pal-e3";
+import PALAPI from "pal-e3";
+
+const palapi = new PALAPI();
+
+palapi.url = "https://...";
+palapi.user = "user_name";
+palapi.password = "passw0rd";
+
+const main = async () => {
+await palapi.getCookie();
+
+let jobAllocation = await palapi.purchaseAllocation("JOB", "Chem Polaris", "BREAKDOWN", "insurance manager", "", "BREAKDOWN - Normal");
+console.log(jobAllocation); // true if succesful
+};
+
+main();
+```
+
 ### Accessing all available API methods and data manipulation functions
 
 All available PAL API call methods are available on the `palapi` object using IntelliSense:
@@ -110,3 +132,13 @@ All available PAL API call methods are available on the `palapi` object using In
 
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
+
+### Release notes 1.2.0
+
+- `purchaseAllocation` method now supports JOB allocations
+- `getPRCtemplateIds` renamed to `getCurrentPRCallocation` as it's a more accurate name
+
+### To do
+
+- Voyage User Alert Configuration allocation (MSI, TSI)
+- MDM Crewing Vessel User Allocation (Crewing Oficer - Incidental Expense, Appraisal)
