@@ -140,8 +140,8 @@ palapi.password = "passw0rd";
 const main = async () => {
 await palapi.getCookie();
 
-let voyAloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
-console.log(voyAloc); // true if succesful
+let voyAlloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
+console.log(voyAlloc); // true if succesful
 };
 
 main();
