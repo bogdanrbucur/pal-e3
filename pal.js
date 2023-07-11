@@ -423,9 +423,6 @@ export default class PALAPI {
 		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
 		if (docType === "JOB" && template == null) throw new Error("Approval template is mandatory for JOB document type!");
 
-		// TODO if JOB, ApprovalTemplateId = 0
-		// TODO if JOB, get ApprovalCycleTemplateId from function argument
-
 		console.log("Start POST request for PRC Allocation...");
 		console.time("PRC allocation POST request");
 
@@ -560,11 +557,9 @@ export default class PALAPI {
 		// validate the action
 		// if any error exists, return false
 		if (response.data.Errors !== null) return false;
-		// return response.data;
-
-		// TODO the response is "" users for JOB doc types
-		// TODO need to validate this as well. Another API call?
-		return this.isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, roleId, usersIds, VesselAllocationId, vslIds);
+		// read the current allocation and check if it matches the input
+		let isSuccesful = await this.isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, roleCode, usersIds, VesselAllocationId, vslIds, vslObjectIds, catId);
+		return isSuccesful;
 	}
 
 	/**
@@ -652,8 +647,8 @@ export default class PALAPI {
 	async getCurrentPRCallocation(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId = "") {
 		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
 
-		console.log("Start request for PRC template IDs...");
-		console.time("Purchase template IDs request");
+		console.log("Start request for current PRC allocation...");
+		console.time("Current PRC allocation request");
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -678,8 +673,8 @@ export default class PALAPI {
 		};
 
 		let response = await axios.request(options);
-		console.log("Got response for PRC template IDs");
-		console.timeEnd("Purchase template IDs request");
+		console.log("Got response for current PRC allocation");
+		console.timeEnd("Current PRC allocation request");
 		// return response.data.Data[0];
 		return {
 			ApprovalCycleTemplateId: response.data.Data[0].ApprovalCycleTemplateId,
@@ -691,22 +686,25 @@ export default class PALAPI {
 
 	/**
 	 * Validate the reponse to check if the PRC allocation was succesful
-	 * @param {Object} reponse
+	 * @param {string} docType
 	 * @param {number} ApprovalCycleTemplateId
 	 * @param {number} ApprovalTemplateId
 	 * @param {number} RoleId
 	 * @param {string} UserIds
 	 * @param {number} VesselAllocationId
-	 * @return {boolean}
+	 * @param {number} vesselId
+	 * @param {number} vesselObjectId
+	 * @param {string} categoryId
+	 * @return {Promise<boolean>}
 	 */
-	async isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId, vesselId) {
+	async isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId, vesselId, vesselObjectId, categoryId) {
 		let valid = false;
 		let response = await this.getCurrentPRCallocation(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId);
 
 		// make an array from the provided user IDs
 		let UserIdsArray = UserIds.split(",");
 
-		response.forEach((element) => {
+		response.roles.forEach((element) => {
 			// make an array from the server reponse users
 			let responseUserIdsArray = element.UserIds.split(",");
 			let usersValid = false;
