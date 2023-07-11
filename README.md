@@ -125,6 +125,28 @@ console.log(jobAllocation); // true if succesful
 main();
 ```
 
+#### Assigning Bogdan in Technical Supt alert role in Voyage User Alert Configuration for Chem Polaris
+
+```js
+import * as PAL from "pal-e3";
+import PALAPI from "pal-e3";
+
+const palapi = new PALAPI();
+
+palapi.url = "https://...";
+palapi.user = "user_name";
+palapi.password = "passw0rd";
+
+const main = async () => {
+await palapi.getCookie();
+
+let voyAloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", "bogdan");
+console.log(voyAloc); // true if succesful
+};
+
+main();
+```
+
 ### Accessing all available API methods and data manipulation functions
 
 All available PAL API call methods are available on the `palapi` object using IntelliSense:
@@ -133,6 +155,10 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
+### Release notes 1.3.0
+
+- `voyageAlertConfig` method now for Voyage User Alert Configuration
+
 ### Release notes 1.2.0
 
 - `purchaseAllocation` method now supports JOB allocations
@@ -140,5 +166,4 @@ All available data manipulation functions can be accessed from the `PAL` object 
 
 ### To do
 
-- Voyage User Alert Configuration allocation (MSI, TSI)
 - MDM Crewing Vessel User Allocation (Crewing Oficer - Incidental Expense, Appraisal)
