@@ -492,7 +492,7 @@ export default class PALAPI {
 			throw new Error("Role not found!");
 		}
 
-		// get roleCode
+		// get roleId
 		let roleId;
 		approvalsIds.roles.forEach((responseRole) => {
 			if (responseRole.Name.toUpperCase() === role.toUpperCase()) {
