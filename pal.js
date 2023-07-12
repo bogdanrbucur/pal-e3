@@ -434,7 +434,8 @@ export default class PALAPI {
 		console.log(`VesselId: ${vslIds}`);
 
 		// get users by ID
-		let usersIds = await this.#usersToIdAndUserName(users).id;
+		let usersResponse = await this.#usersToIdAndUserName(users);
+		let usersIds = usersResponse.id;
 		console.log(`UsersIds: ${usersIds}`);
 
 		// get category by ID
@@ -505,9 +506,11 @@ export default class PALAPI {
 
 		console.log(`ApprovalCycleTemplateId: ${ApprovalCycleTemplateId}`);
 		console.log(`ApprovalTemplateId: ${ApprovalTemplateId}`);
-		console.log(`VesselAllocationId: ${VesselAllocationId}`);
+		console.log(`CategoryId: ${catId}`);
 		console.log(`RoleCode: ${roleCode}`);
 		console.log(`RoleId: ${roleId}`);
+		console.log(`UsersIds: ${usersIds}`);
+		console.log(`VesselAllocationId: ${VesselAllocationId}`);
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -782,7 +785,8 @@ export default class PALAPI {
 		// TODO calling the same API twice? ew...
 		let vslId = await this.#vesselNamesToIds(vessel);
 		let vslObjectId = await this.#vesselNamesToObjectIds(vessel);
-		let userIds = await this.#usersToIdAndUserName(users).id;
+		let usersResponse = await this.#usersToIdAndUserName(users);
+		let userIds = usersResponse.id;
 		let rolesResponse = await this.#getVoyAlertRoles(vslId, vslObjectId);
 
 		// get roleCode
