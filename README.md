@@ -37,7 +37,7 @@ palapi.password = process.env.PASSWORD;
 Import the vessels and Purchase categories and set them in variables to be reused
 
 ```js
-const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
+const myVessels = ["CHEM MIA", "CHEM POLARIS", "CHEM VENUS"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 ```
 
@@ -68,7 +68,7 @@ palapi.url = "https://...";
 palapi.user = "user_name";
 palapi.password = "passw0rd";
 
-const myVessels = ["CHEM ALYA", "CHEM HOUSTON", "CHEM LITHIUM"];
+const myVessels = ["CHEM MIA", "CHEM POLARIS", "CHEM VENUS"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
 const main = async () => {
@@ -147,6 +147,30 @@ console.log(voyAlloc); // true if succesful
 main();
 ```
 
+#### Assigning Bogdan and Adrian as Crew Manager in MDM -> Crewing -> Vessel User Allocation for the Incidental Expense process on Chem Mia
+
+Users not in the users array will be removed from the Crew Manager role in Incidental Expense on Chem Mia.
+
+```js
+import * as PAL from "pal-e3";
+import PALAPI from "pal-e3";
+
+const palapi = new PALAPI();
+
+palapi.url = "https://...";
+palapi.user = "user_name";
+palapi.password = "passw0rd";
+
+const main = async () => {
+await palapi.getCookie();
+
+let crewAlloc = await palapi.crewAllocation("Chem mia", "incidential  expense", "crew - crew manager", ["bogdan", "adrian"]);
+console.log(crewAlloc); // true if succesful or if user already there in the same role
+};
+
+main();
+```
+
 ### Accessing all available API methods and data manipulation functions
 
 All available PAL API call methods are available on the `palapi` object using IntelliSense:
@@ -157,13 +181,11 @@ All available data manipulation functions can be accessed from the `PAL` object 
 
 ### Release notes 1.3.0
 
-- `voyageAlertConfig` method now for Voyage User Alert Configuration
+- added `voyageAlertConfig` method for Voyage User Alert Configuration
+- added `crewAllocation` method for MDM Crewing Vessel User Allocation
+- many implementation details methods renamed and made private
 
 ### Release notes 1.2.0
 
 - `purchaseAllocation` method now supports JOB allocations
 - `getPRCtemplateIds` renamed to `getCurrentPRCallocation` as it's a more accurate name
-
-### To do
-
-- MDM Crewing Vessel User Allocation (Crewing Oficer - Incidental Expense, Appraisal)
