@@ -179,12 +179,13 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.3.1
+### Release notes 1.3.2
 
 - added `voyageAlertConfig` method for Voyage User Alert Configuration
 - added `crewAllocation` method for MDM Crewing Vessel User Allocation
 - many implementation details methods renamed and made private
 - made all URL endpoints dynamic
+- fix private method response destructuring bug
 
 ### Release notes 1.2.0
 
