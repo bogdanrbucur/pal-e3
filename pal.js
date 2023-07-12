@@ -91,7 +91,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palvoyage/VoyagePAL/PortCallPlanner/GetLegPlanning",
+			url: `${this.url}/palvoyage/VoyagePAL/PortCallPlanner/GetLegPlanning`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -213,7 +213,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/GeneralQuery/GetGeneralQueryData",
+			url: `${this.url}/palpurchase/PurchasePAL/GeneralQuery/GetGeneralQueryData`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -256,7 +256,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/pallpsq/LPSQ/ComplianceOverview/GetReportList",
+			url: `${this.url}/pallpsq/LPSQ/ComplianceOverview/GetReportList`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -290,7 +290,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselDetails",
+			url: `${this.url}/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselDetails`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -369,7 +369,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetJobOrderCategory",
+			url: `${this.url}/palpurchase/PurchasePAL/AllocationOfVessel/GetJobOrderCategory`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -542,7 +542,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/UpdateFunctionalRoles",
+			url: `${this.url}/palpurchase/PurchasePAL/AllocationOfVessel/UpdateFunctionalRoles`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -591,7 +591,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselUserDetails",
+			url: `${this.url}/palpurchase/PurchasePAL/AllocationOfVessel/GetAllocationVesselUserDetails`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -666,7 +666,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/AllocationOfVessel/GetFunctionalRoleDetails",
+			url: `${this.url}/palpurchase/PurchasePAL/AllocationOfVessel/GetFunctionalRoleDetails`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -752,7 +752,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palpurchase/PurchasePAL/ProcurementBusinessFlow/GetTemplateDetails",
+			url: `${this.url}/palpurchase/PurchasePAL/ProcurementBusinessFlow/GetTemplateDetails`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -814,7 +814,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palvoyage/VoyagePAL/AllocateRoles/InsertAllocateRoles",
+			url: `${this.url}/palvoyage/VoyagePAL/AllocateRoles/InsertAllocateRoles`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -855,7 +855,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palvoyage/VoyagePAL/AllocateRoles/GetAllocateRoles",
+			url: `${this.url}/palvoyage/VoyagePAL/AllocateRoles/GetAllocateRoles`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -925,7 +925,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/AllocationOfVessel/UpdateFunctionalRoles",
+			url: `${this.url}/palmdm/CrewingPAL/AllocationOfVessel/UpdateFunctionalRoles`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -964,7 +964,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/ProcessMaster/GetProcessMasterData",
+			url: `${this.url}/palmdm/CrewingPAL/ProcessMaster/GetProcessMasterData`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -1007,7 +1007,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/AllocationOfVessel/GetFunctionalRoleDetails",
+			url: `${this.url}/palmdm/CrewingPAL/AllocationOfVessel/GetFunctionalRoleDetails`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -1042,7 +1042,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/AllocationOfVessel/DeleteVesselAllocationList",
+			url: `${this.url}/palmdm/CrewingPAL/AllocationOfVessel/DeleteVesselAllocationList`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
@@ -1197,7 +1197,7 @@ export default class PALAPI {
 
 		let options = {
 			method: "POST",
-			url: "https://palapp.asm-maritime.com/palmdm/CrewingPAL/FunctionalRoles/GetFunctionalRolesData",
+			url: `${this.url}/palmdm/CrewingPAL/FunctionalRoles/GetFunctionalRolesData`,
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
