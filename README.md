@@ -183,7 +183,7 @@ All available data manipulation functions can be accessed from the `PAL` object 
 
 - added `voyageAlertConfig` method for Voyage User Alert Configuration
 - added `crewAllocation` method for MDM Crewing Vessel User Allocation
-- a few private methods renamed to better reflect their use
+- many implementation details methods renamed and made private
 
 ### Release notes 1.2.0
 

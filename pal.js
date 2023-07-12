@@ -26,11 +26,10 @@ export default class PALAPI {
 	 * .BSMAuthCookie session cookie used in API calls
 	 * @type {string}
 	 */
-	cookie;
+	#cookie;
 
 	/**
 	 * Logs in to PAL using provided credentials, retrieves the session cookie and sets the cookie property
-	 * @return {Promise<string>} The string representing .BSMAuthCookie
 	 */
 	async getCookie() {
 		return new Promise(async (resolve, error) => {
@@ -70,7 +69,7 @@ export default class PALAPI {
 				await browser.close();
 				console.log(`Closed the browser`);
 
-				this.cookie = cookie;
+				this.#cookie = cookie;
 				resolve(cookie);
 			} else {
 				console.error("Received invalid cookie! Check the login credentials");
@@ -97,7 +96,7 @@ export default class PALAPI {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
 				"Content-Type": "application/json",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: { Fromdate: dateToString(startDate), ToDate: dateToString(untilDate) },
 		};
@@ -121,10 +120,10 @@ export default class PALAPI {
 		console.time("General Query reponse time");
 
 		// convert the array of vessel names to string of IDs
-		let vesslesIdsString = await this.vesselNamesToObjectIds(vessels);
+		let vesslesIdsString = await this.#vesselNamesToObjectIds(vessels);
 
 		// convert the array of vessel names to string of IDs
-		let catoriesIds = await this.categoriesNamesToIds(categories, docType);
+		let catoriesIds = await this.#categoriesNamesToIds(categories, docType);
 
 		// build the Form body
 		let body = new FormData();
@@ -218,7 +217,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: body,
 		};
@@ -261,7 +260,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -295,7 +294,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -311,7 +310,7 @@ export default class PALAPI {
 	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
 	 * @return {Promise<string>} List of VesselObjectIds as string: "246049,246026"
 	 */
-	async vesselNamesToObjectIds(vesselsArray) {
+	async #vesselNamesToObjectIds(vesselsArray) {
 		// make sure the input vessel(s) are all UpperCase
 		if (typeof vesselsArray === "string") vesselsArray = vesselsArray.toUpperCase();
 		else vesselsArray = vesselsArray.map((vsl) => vsl.toUpperCase());
@@ -334,7 +333,7 @@ export default class PALAPI {
 	 * @param {array} myVessels Array of vessel names: ["CHEM HOUSTON", "CHEM MIA"]
 	 * @return {Promise<string>} List of VesselIds as string: "246049,246026"
 	 */
-	async vesselNamesToIds(vesselsArray) {
+	async #vesselNamesToIds(vesselsArray) {
 		// make sure the input vessel(s) are all UpperCase
 		if (typeof vesselsArray === "string") vesselsArray = vesselsArray.toUpperCase();
 		else vesselsArray = vesselsArray.map((vsl) => vsl.toUpperCase());
@@ -355,7 +354,7 @@ export default class PALAPI {
 	 * @param
 	 * @return {Promise<Array>} Array of objects, each containing a Purchase category
 	 */
-	async getPurchaseCategories(docType) {
+	async #getPurchaseCategories(docType) {
 		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
 		console.log("Start POST request for Purchase categories...");
 		console.time("Purchase categories POST request");
@@ -374,7 +373,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -391,7 +390,7 @@ export default class PALAPI {
 	 * @param {string} docType "PROC" or "JOB"
 	 * @return {Promise<string>} List of Ids as string: "201205,201184"
 	 */
-	async categoriesNamesToIds(categoriesArray, docType) {
+	async #categoriesNamesToIds(categoriesArray, docType) {
 		// Select Any is category 0
 		if (typeof categoriesArray === "string" && categoriesArray.toUpperCase() === "SELECT ANY") return 0;
 
@@ -399,7 +398,7 @@ export default class PALAPI {
 		if (typeof categoriesArray === "string") categoriesArray = categoriesArray.toUpperCase();
 		else categoriesArray = categoriesArray.map((cat) => cat.toUpperCase());
 
-		let categories = await this.getPurchaseCategories(docType);
+		let categories = await this.#getPurchaseCategories(docType);
 		let filteredCategories = categories.filter((cat) => categoriesArray.includes(cat.Text.toUpperCase()));
 		let categoriesString = "";
 		filteredCategories.forEach((cat) => {
@@ -429,17 +428,17 @@ export default class PALAPI {
 		console.time("PRC allocation POST request");
 
 		// convert the array of vessel names to string of IDs
-		let vslObjectIds = await this.vesselNamesToObjectIds(vessel);
+		let vslObjectIds = await this.#vesselNamesToObjectIds(vessel);
 		console.log(`VesselObjectId: ${vslObjectIds}`);
-		let vslIds = await this.vesselNamesToIds(vessel);
+		let vslIds = await this.#vesselNamesToIds(vessel);
 		console.log(`VesselId: ${vslIds}`);
 
 		// get users by ID
-		let usersIds = await this.usersToIdAndUserName(users).id;
+		let usersIds = await this.#usersToIdAndUserName(users).id;
 		console.log(`UsersIds: ${usersIds}`);
 
 		// get category by ID
-		let catId = await this.categoriesNamesToIds(category, docType);
+		let catId = await this.#categoriesNamesToIds(category, docType);
 		console.log(`CategoryId: ${catId}`);
 
 		// Define ApprovalCycleTemplateId and ApprovalTemplateId depending on the document type
@@ -460,7 +459,7 @@ export default class PALAPI {
 				ApprovalTemplateId = 0;
 
 				// Get the Cycle Templates IDs if allocating to JOB document type
-				let cycleTemplates = await this.getPRCcycleTemplateIds();
+				let cycleTemplates = await this.#getPRCcycleTemplateIds();
 
 				// get ApprovalCycleTemplateId from the template name
 				cycleTemplates.forEach((ct) => {
@@ -547,7 +546,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -560,7 +559,7 @@ export default class PALAPI {
 		// if any error exists, return false
 		if (response.data.Errors !== null) return false;
 		// read the current allocation and check if it matches the input
-		let isSuccesful = await this.isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, roleCode, usersIds, VesselAllocationId, vslIds, vslObjectIds, catId);
+		let isSuccesful = await this.#isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, roleCode, usersIds, VesselAllocationId, vslIds, vslObjectIds, catId);
 		return isSuccesful;
 	}
 
@@ -596,7 +595,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -613,7 +612,7 @@ export default class PALAPI {
 	 * @param {Array<string>} usr String or array of users names: ["Bogdan", "Helen"]
 	 * @return {Promise<{id, username}>} Object with 2 strings: {id: "110531,489954", username: "Bogdan Lazar, Lidia Haile"}
 	 */
-	async usersToIdAndUserName(usr) {
+	async #usersToIdAndUserName(usr) {
 		if (usr === "") return "";
 
 		let users = await this.getUsers();
@@ -671,7 +670,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -701,7 +700,7 @@ export default class PALAPI {
 	 * @param {string} categoryId
 	 * @return {Promise<boolean>}
 	 */
-	async isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId, vesselId, vesselObjectId, categoryId) {
+	async #isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, RoleId, UserIds, VesselAllocationId, vesselId, vesselObjectId, categoryId) {
 		let valid = false;
 		let response = await this.getCurrentPRCallocation(docType, vesselId, vesselObjectId, categoryId, ApprovalCycleTemplateId);
 
@@ -739,7 +738,7 @@ export default class PALAPI {
 	 * Get the IDs of all the cycle templates
 	 * @return {Promise<Object[]>}
 	 */
-	async getPRCcycleTemplateIds() {
+	async #getPRCcycleTemplateIds() {
 		console.log("Start request for PRC cycle template IDs...");
 		console.time("Purchase cycle template IDs request");
 
@@ -757,7 +756,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -781,10 +780,10 @@ export default class PALAPI {
 		console.time("Voyage Alert Config request");
 
 		// TODO calling the same API twice? ew...
-		let vslId = await this.vesselNamesToIds(vessel);
-		let vslObjectId = await this.vesselNamesToObjectIds(vessel);
-		let userIds = await this.usersToIdAndUserName(users).id;
-		let rolesResponse = await this.getVoyAlertRoles(vslId, vslObjectId);
+		let vslId = await this.#vesselNamesToIds(vessel);
+		let vslObjectId = await this.#vesselNamesToObjectIds(vessel);
+		let userIds = await this.#usersToIdAndUserName(users).id;
+		let rolesResponse = await this.#getVoyAlertRoles(vslId, vslObjectId);
 
 		// get roleCode
 		let roleId;
@@ -819,7 +818,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -841,7 +840,7 @@ export default class PALAPI {
 	 * @param {number} vslObjectId
 	 * @return {Promise<Object[]>} Array of Voyage alert role objects
 	 */
-	async getVoyAlertRoles(vslId, vslObjectId) {
+	async #getVoyAlertRoles(vslId, vslObjectId) {
 		console.log("Start request for Voyage alert roles...");
 		console.time("Voyage alert roles request");
 
@@ -860,7 +859,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -886,45 +885,9 @@ export default class PALAPI {
 	 * @param {number} processId
 	 * @return {Promise<boolean>} success or not
 	 */
-	async addCrewAllocation(roleId, userIds, userName, vslId, vslObjectId, processId) {
+	async #addCrewAllocation(roleId, userIds, userName, vslId, vslObjectId, processId) {
 		console.log("Start request for adding crew allocation...");
 		console.time("Adding crew allocation request");
-
-		// // TODO calling the same API twice? ew...
-		// let vslId = await this.vesselNamesToIds(vessel);
-		// let vslObjectId = await this.vesselNamesToObjectIds(vessel);
-
-		// // get 2 strings: id and username
-		// let users = await this.usersToIdAndUserName(user);
-		// let userIds = users.id;
-		// let userName = users.username;
-
-		// // get process ID
-		// let processesReponse = await this.getCrewingProcesses();
-
-		// let processId;
-		// processesReponse.forEach((resProc) => {
-		// 	if (resProc.Name.toUpperCase() === process.toUpperCase()) {
-		// 		processId = resProc.Id;
-		// 	}
-		// });
-		// if (processId === undefined) {
-		// 	throw new Error("Process not found!");
-		// }
-
-		// // get crew roles and ID
-		// let rolesResponse = await this.getCrewingRoles(vslId, vslObjectId, processId);
-
-		// // get roleId
-		// let roleId;
-		// rolesResponse.forEach((resRole) => {
-		// 	if (resRole.Name.toUpperCase() === role.toUpperCase()) {
-		// 		roleId = resRole.Id;
-		// 	}
-		// });
-		// if (roleId === undefined) {
-		// 	throw new Error("Role not found!");
-		// }
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -966,7 +929,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -987,7 +950,7 @@ export default class PALAPI {
 	 * Get all the Crewing processes and their IDs
 	 * @return {Promise<Object[]>} Array of Voyage alert role objects
 	 */
-	async getCrewingProcesses() {
+	async #getCrewingProcesses() {
 		console.log("Start request for Crewing processes...");
 		console.time("Crewing processes request");
 
@@ -1005,7 +968,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -1028,7 +991,7 @@ export default class PALAPI {
 	 * @param {number} processId
 	 * @return {Promise<Object[]>} Array of Voyage alert role objects
 	 */
-	async getAllocatedUsers(VesselId, VesselObjectId, processId) {
+	async #getAllocatedUsers(VesselId, VesselObjectId, processId) {
 		console.log("Start request for allocated Crewing users...");
 		console.time("Allocated Crewing users request");
 
@@ -1048,7 +1011,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -1069,7 +1032,7 @@ export default class PALAPI {
 	 * @param {number} fid
 	 * @return {Promise<boolean>} success or not
 	 */
-	async removeCrewingAllocation(fid) {
+	async #removeCrewingAllocation(fid) {
 		console.log("Start request for removing Crewing allocation...");
 		console.time("Removing Crewing allocation request");
 
@@ -1083,7 +1046,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
@@ -1113,11 +1076,11 @@ export default class PALAPI {
 		if (typeof inputUsers === "string") inputUsers = [`${inputUsers}`];
 
 		// TODO calling the same API twice? ew...
-		let vslId = await this.vesselNamesToIds(vessel);
-		let vslObjectId = await this.vesselNamesToObjectIds(vessel);
+		let vslId = await this.#vesselNamesToIds(vessel);
+		let vslObjectId = await this.#vesselNamesToObjectIds(vessel);
 
 		// get process ID
-		let processesReponse = await this.getCrewingProcesses();
+		let processesReponse = await this.#getCrewingProcesses();
 
 		let processId;
 		processesReponse.forEach((resProc) => {
@@ -1130,8 +1093,8 @@ export default class PALAPI {
 		}
 
 		// get crew roles and ID
-		let rolesResponse = await this.getAllocatedUsers(vslId, vslObjectId, processId);
-		let allRolesResponse = await this.getCrewingRoles();
+		let rolesResponse = await this.#getAllocatedUsers(vslId, vslObjectId, processId);
+		let allRolesResponse = await this.#getCrewingRoles();
 
 		// get roleId
 		let roleId;
@@ -1171,13 +1134,13 @@ export default class PALAPI {
 		// Remove the users on the list
 		for (const user of usersToRemove) {
 			console.log(`Removing user ${user.UserNames}`);
-			succesful = await this.removeCrewingAllocation(user.FId);
+			succesful = await this.#removeCrewingAllocation(user.FId);
 		}
 
 		// get updated allocation if any user was removed
 		if (usersToRemove.length !== 0) {
 			console.log("Users removed, updating allocated users");
-			rolesResponse = await this.getAllocatedUsers(vslId, vslObjectId, processId);
+			rolesResponse = await this.#getAllocatedUsers(vslId, vslObjectId, processId);
 		}
 
 		// Run through each already allocated user and check if it's in the input list
@@ -1207,9 +1170,9 @@ export default class PALAPI {
 		// allocate the users
 		for (const user of usersToAdd) {
 			// get 2 strings: id and username
-			let users = await this.usersToIdAndUserName(user);
+			let users = await this.#usersToIdAndUserName(user);
 			console.log(`Adding user ${users.username} in ${role.toUpperCase()} role...`);
-			succesful = await this.addCrewAllocation(roleId, users.id, users.username, vslId, vslObjectId, processId);
+			succesful = await this.#addCrewAllocation(roleId, users.id, users.username, vslId, vslObjectId, processId);
 		}
 
 		console.timeEnd("Crew allocation");
@@ -1220,7 +1183,7 @@ export default class PALAPI {
 	 * Gets all the roles in Crewing
 	 * @return {Promise<Object[]>} Array of objects, each containing a role
 	 */
-	async getCrewingRoles() {
+	async #getCrewingRoles() {
 		console.log("Start request for Crewing roles...");
 		console.time("Crewing roles request");
 
@@ -1238,7 +1201,7 @@ export default class PALAPI {
 			headers: {
 				Accept: "*/*",
 				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 			},
 			data: bodyFormData,
 		};
