@@ -10,13 +10,19 @@ export function dateToString(input) {
 }
 
 /**
- * Transform strings from PAL "DD-MMM-YYYY" to JavaScript Date objects
- * @param {string} input Date in format DD-MMM-YYYY
+ * Transform strings DD-MMM-YYYY or DDMMYYYY to JavaScript Date objects
+ * @param {string} input Date in format DD-MMM-YYYY or DDMMYYYY
  * @return {Date} JavaScript Date object. If input is invalid, it returns date 1 Jan 1970
  */
 export function stringToDate(input) {
+	if (input.length === 8) {
+		let year = input.slice(4, 8);
+		let month = input.slice(2, 4) - 1;
+		let day = input.slice(0, 2);
+		return new Date(year, month, day);
+	}
 	if (input.length !== 11) {
-		console.log(`stringToDate bad input! Accepts only DD-MMM-YYYY`);
+		console.log(`stringToDate bad input! Accepts only DD-MMM-YYYY or DDMMYYYY`);
 		return new Date(0);
 	}
 	return new Date(`${input.slice(7, 11)}, ${input.slice(3, 6)}, ${input.slice(0, 2)}`);
@@ -101,12 +107,12 @@ export function toInputDate(input) {
  * @return {string} String 01MMYYYY of current month
  */
 export function firstCurrentMonth() {
-  let today = new Date();
-  let mm2 = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
-  let yyyy2 = today.getFullYear().toString().slice(0);
-  let anotherDate = "01" + mm2 + yyyy2;
-  // console.log(anotherDate);
-  return anotherDate;
+	let today = new Date();
+	let mm2 = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+	let yyyy2 = today.getFullYear().toString().slice(0);
+	let anotherDate = "01" + mm2 + yyyy2;
+	// console.log(anotherDate);
+	return anotherDate;
 }
 
 /**
@@ -114,16 +120,16 @@ export function firstCurrentMonth() {
  * @return {string} String 01MMYY of previous month
  */
 export function secondLastMonth() {
-  let today = new Date();
-  today.setDate(0); // 0 will result in the last day of the previous month
-  today.setDate(1); // 1 will result in the first day of the month
-  today.setDate(2); // 2 will result in the second day of the month
-  let dd3 = String(today.getDate()).padStart(2, "0");
-  let mm3 = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
-  let yy3 = today.getFullYear().toString().slice(2);
-  let localDate = dd3 + mm3 + yy3;
-  // console.log(localDate);
-  return localDate;
+	let today = new Date();
+	today.setDate(0); // 0 will result in the last day of the previous month
+	today.setDate(1); // 1 will result in the first day of the month
+	today.setDate(2); // 2 will result in the second day of the month
+	let dd3 = String(today.getDate()).padStart(2, "0");
+	let mm3 = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+	let yy3 = today.getFullYear().toString().slice(2);
+	let localDate = dd3 + mm3 + yy3;
+	// console.log(localDate);
+	return localDate;
 }
 
 /**
@@ -132,8 +138,18 @@ export function secondLastMonth() {
  * @return {string} String 0101YYYY of the previous month
  */
 export function previous1Jan() {
-  let today = new Date();
-  today.setDate(0); // 0 will result in the last day of the previous month
-  // console.log(`0101${today.getFullYear()}`);
-  return `0101${today.getFullYear()}`;
+	let today = new Date();
+	today.setDate(0); // 0 will result in the last day of the previous month
+	// console.log(`0101${today.getFullYear()}`);
+	return `0101${today.getFullYear()}`;
+}
+
+/**
+ * Get a string with today's date
+ * @return {string} String with today's date DDMMYYYY
+ */
+export function todayDDMMYYYY() {
+	let logDate = new Date();
+	logDate = String(logDate.getDate()).padStart(2, "0") + String(logDate.getMonth() + 1).padStart(2, "0") + String(logDate.getFullYear());
+	return logDate;
 }

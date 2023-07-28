@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
 import axios from "axios";
 import FormData from "form-data";
+import { previous1Jan, todayDDMMYYYY, toInputDate, stringToDate } from "./parse.js";
 
 /**
  * Class with all PAL e3 API call methods
@@ -1219,6 +1220,253 @@ export default class PALAPI {
 		} else {
 			throw new Error("Failed to retrieve Crewing roles!");
 		}
+	}
+
+	/**
+	 * Returns the cumulated IMO DCS voyages consumptions for the given vessel and year
+	 * @param {string} vesselName
+	 * @param {number} [year]
+	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
+	 */
+	async imoDcs(vesselName, year) {
+		console.time("IMO DCS");
+		return new Promise(async (resolve, error) => {
+			const browser = await puppeteer.launch({ headless: "new" }); // for running in Node.js
+			// const browser = await puppeteer.launch({ executablePath: "./chromium/chrome.exe", headless: false }); // for .exe packages
+			const page = await browser.newPage();
+
+			let startDate; // report start date, normally 1 Jan
+			let reportDate; // normally 1 of the current month
+
+			// If year was provided
+			// if it's this year
+			if (year === new Date().getFullYear()) {
+				startDate = `0101${year}`;
+				reportDate = todayDDMMYYYY();
+				// if it's another year
+			} else if (year && String(year).slice(0, 2) === "20") {
+				startDate = `0101${year}`;
+				reportDate = `3112${year}`;
+			} else {
+				// TODO what if running in Jan?
+				// else do it for current year, unless running in January
+				startDate = previous1Jan(); // 1 Jan of previous' month
+				reportDate = todayDDMMYYYY();
+			}
+
+			// override default timeout of 30000
+			page.setDefaultNavigationTimeout(60000);
+			console.log(`Starting IMO DCS data gathering for ${vesselName}...`);
+
+			const navigationPromise = page.waitForNavigation();
+
+			// Go to login page
+			await page.goto(`${this.url}/palweblogin/Home/Login`);
+
+			await page.setViewport({ width: 1920, height: 900 });
+
+			await navigationPromise;
+			console.log(`Opened ${this.url}/palweblogin/Home/Login`);
+
+			// Enter PAL credentials
+			await page.waitForSelector("#UserName");
+			await page.type("#UserName", this.user);
+			await page.type("#Password", this.password);
+			await new Promise((r) => setTimeout(r, 100));
+
+			await navigationPromise;
+
+			await new Promise((r) => setTimeout(r, 200));
+
+			await page.waitForSelector("#btnSubmit");
+			await page.click("#btnSubmit");
+
+			console.log("Logged in");
+
+			// wait 2500ms for Dashboard to load
+			await new Promise((r) => setTimeout(r, 2500));
+
+			// Go to EUMRV page
+			await page.goto(`${this.url}/palvoyage/VoyagePAL/EUMRVLogReport`);
+			console.log(`Opened EUMRV Log Report page`);
+
+			// Navigate to IMO DCS tab
+			await new Promise((r) => setTimeout(r, 500));
+			await page.keyboard.press("Tab");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("Tab");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("ArrowRight");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("ArrowRight");
+			await new Promise((r) => setTimeout(r, 200));
+			console.log(`Selected IMO DCS tab`);
+
+			// Select the vessel
+			await page.waitForSelector("#DivPerformanceOverView > #divHeader > table > tbody > tr > .bsm-common-content");
+			await page.click("#DivPerformanceOverView > #divHeader > table > tbody > tr > .bsm-common-content");
+			await page.keyboard.press("Tab");
+			await new Promise((r) => setTimeout(r, 200));
+			await page.keyboard.type(vesselName);
+			await new Promise((r) => setTimeout(r, 1500));
+			await page.keyboard.press("ArrowDown");
+			await new Promise((r) => setTimeout(r, 500));
+			await page.keyboard.press("Enter");
+			await new Promise((r) => setTimeout(r, 300));
+			console.log(`Selected ${vesselName}`);
+
+			// Type From date
+			await page.waitForSelector("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
+			await page.click("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
+			for (let i = 0; i < 6; i++) {
+				await page.keyboard.press("Tab");
+				await new Promise((r) => setTimeout(r, 100));
+			}
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.type(startDate);
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("Enter");
+			await new Promise((r) => setTimeout(r, 100));
+
+			// Type To date
+			await page.keyboard.press("Tab");
+			await page.keyboard.type(reportDate);
+			await new Promise((r) => setTimeout(r, 1));
+			await page.keyboard.press("Enter");
+
+			// Click Show
+			await page.keyboard.press("Tab");
+			await page.keyboard.press("Tab");
+			await page.keyboard.press("Space");
+			console.log(`Selected interval ${startDate}-${reportDate} and clicked Show. Waiting for results...`);
+
+			await new Promise((r) => setTimeout(r, 200));
+
+			// wait for the page to load results
+			await page.waitForSelector("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+			let element = await page.$("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+			let results = await page.evaluate((el) => el.textContent, element);
+
+			// Check every 3 sec. if it still says "No items to display" at the bottom. If not, move on, means the data is loaded
+			while (results == "No items to display") {
+				await new Promise((r) => setTimeout(r, 3000));
+				element = await page.$("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+				results = await page.evaluate((el) => el.textContent, element);
+			}
+			console.log(`Results displayed`);
+
+			// Read consumption values
+			// Sea HFO
+			await new Promise((r) => setTimeout(r, 300));
+			await page.waitForSelector(".k-footer-template > td:nth-child(8) > div > strong > span"); // this is where total HFO is
+			element = await page.$(".k-footer-template > td:nth-child(8) > div > strong > span");
+			// get the value
+			let seaHFO = await page.evaluate((el) => el.textContent, element);
+			// eliminate the comma from the value and convert it to number
+			seaHFO = seaHFO.replace(",", "");
+			seaHFO = Number(seaHFO);
+
+			// Sea LFO
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(9) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(9) > div > strong > span");
+			// get the value
+			let seaLFO = await page.evaluate((el) => el.textContent, element);
+			// eliminate the comma from the value and convert it to number
+			seaLFO = seaLFO.replace(",", "");
+			seaLFO = Number(seaLFO);
+
+			// Sea MDO
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(10) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(10) > div > strong > span");
+			// get the value
+			let seaMDO = await page.evaluate((el) => el.textContent, element);
+			// eliminate the comma from the value and convert it to number
+			seaMDO = seaMDO.replace(",", "");
+			seaMDO = Number(seaMDO);
+
+			// Port HFO
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(12) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(12) > div > strong > span");
+			// get the value
+			let portHFO = await page.evaluate((el) => el.textContent, element);
+			// eliminate the comma from the value and convert it to number
+			portHFO = portHFO.replace(",", "");
+			portHFO = Number(portHFO);
+
+			// Port LFO
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(13) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(13) > div > strong > span");
+			// get the value
+			let portLFO = await page.evaluate((el) => el.textContent, element);
+			// eliminate the comma from the value and convert it to number
+			portLFO = portLFO.replace(",", "");
+			portLFO = Number(portLFO);
+
+			// Port MDO
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(14) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(14) > div > strong > span");
+			// get the value
+			let portMDO = await page.evaluate((el) => el.textContent, element);
+			// eliminate the comma from the value and convert it to number
+			portMDO = portMDO.replace(",", "");
+			portMDO = Number(portMDO);
+
+			// Total HFO
+			let totalHFO = seaHFO + portHFO;
+
+			// Total LFO
+			let totalLFO = seaLFO + portLFO;
+
+			// Total MDO
+			let totalMDO = seaMDO + portMDO;
+
+			// Read sailed distance
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(16) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(16) > div > strong > span");
+			let distance = await page.evaluate((el) => el.textContent, element);
+
+			// eliminate the comma from the value and convert it to number
+			distance = distance.replace(",", "");
+			distance = Number(distance);
+
+			// Read Date of Arrival of Last Leg (DALL)
+			// Go through all legs 1 to 50 and if they exist, get the date of arrival of each leg and keep the last one, since that will be the latest
+			let DALL;
+			for (let i = 1; i < 50; i++) {
+				element = await page.$(`#grdResultIMO > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(7)`);
+				if (element) {
+					DALL = await page.evaluate((el) => el.textContent, element); // expect DD-MMM-YYYY HH:mm
+				}
+			}
+
+			// Convert to format DDMMYYYY
+			DALL = toInputDate(DALL);
+			console.log(`Date of Arrival of Last Leg: ${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`);
+
+			// Some DCS legs will finish after 1st of the current month and DALL could be after
+			// In this case, only need to consider DALL until 1 of the month, since DCS data is also only until that date
+			// Checking if DALL is later than current date and if so, consider it only until current date
+			if (stringToDate(DALL) > stringToDate(reportDate)) {
+				DALL = reportDate;
+			}
+
+			// Get the date in format DD-MMM-YYYY for record keeping
+			let excelDALL = `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`; // expect DD.MM.YYYY
+
+			console.timeEnd("IMO DCS");
+			await browser.close();
+
+			const response = {
+				vessel: vesselName,
+				startDate: `${startDate.slice(0, -6)}.${startDate.slice(2, -4)}.${startDate.slice(4)}`,
+				endDate: `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`,
+				distance,
+				totalHFO,
+				totalLFO,
+				totalMDO,
+			};
+			resolve(response);
+		});
 	}
 }
 
