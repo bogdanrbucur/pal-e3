@@ -45,7 +45,7 @@ Wrap all the API calls in an `async` function to be able to use `await`. Before 
 
 ```js
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 };
 
 main();
@@ -72,10 +72,10 @@ const myVessels = ["CHEM MIA", "CHEM POLARIS", "CHEM VENUS"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 
-let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
-console.log(requsitions);
+	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+	console.log(requsitions);
 };
 
 main();
@@ -94,10 +94,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 
-let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
-console.log(allocation); // true if succesful
+	let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
+	console.log(allocation); // true if succesful
 };
 
 main();
@@ -116,10 +116,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 
-let jobAllocation = await palapi.purchaseAllocation("JOB", "Chem Polaris", "BREAKDOWN", "insurance manager", "", "BREAKDOWN - Normal");
-console.log(jobAllocation); // true if succesful
+	let jobAllocation = await palapi.purchaseAllocation("JOB", "Chem Polaris", "BREAKDOWN", "insurance manager", "", "BREAKDOWN - Normal");
+	console.log(jobAllocation); // true if succesful
 };
 
 main();
@@ -138,10 +138,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 
-let voyAlloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
-console.log(voyAlloc); // true if succesful
+	let voyAlloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
+	console.log(voyAlloc); // true if succesful
 };
 
 main();
@@ -162,13 +162,42 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-await palapi.getCookie();
+	await palapi.getCookie();
 
-let crewAlloc = await palapi.crewAllocation("Chem mia", "incidential  expense", "crew - crew manager", ["bogdan", "adrian"]);
-console.log(crewAlloc); // true if succesful or if user already there in the same role
+	let crewAlloc = await palapi.crewAllocation("Chem mia", "incidential  expense", "crew - crew manager", ["bogdan", "adrian"]);
+	console.log(crewAlloc); // true if succesful or if user already there in the same role
 };
 
 main();
+```
+
+#### Getting IMO DCS cummulated results from 1 Jan until current month
+
+```js
+let dcs = await palapi.imoDcs("Chem Mia");
+console.log(dcs);
+
+// Get the result object
+{
+  vessel: 'Chem Mia',
+  startDate: '01.01.2023',
+  endDate: '01.07.2023',
+  distance: 32279.7,
+  seaHFO: 1303.38,
+  seaLFO: 220.28,
+  seaMDO: 233.36,
+  portHFO: 100.83,
+  portLFO: 0,
+  portMDO: 50.18,
+  totalHFO: 1404.21,
+  totalLFO: 220.28,
+  totalMDO: 283.54,
+  hrsAtSea: 3509.05,
+  hrsAtAnchor: 75.63,
+  hrsDrifting: 0,
+  hrsSteaming: 3433.42,
+  hrsInPort: 850.05
+}
 ```
 
 ### Accessing all available API methods and data manipulation functions
@@ -179,13 +208,14 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.3.3
+### Release notes 1.3.4
 
 - added `voyageAlertConfig` method for Voyage User Alert Configuration
 - added `crewAllocation` method for MDM Crewing Vessel User Allocation
 - many implementation details methods renamed and made private
 - made all URL endpoints dynamic
 - fix private method response destructuring bug
+- added `imoDcs` method for IMO DCS reports
 
 ### Release notes 1.2.0
 

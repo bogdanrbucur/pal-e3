@@ -1,7 +1,7 @@
 import puppeteer from "puppeteer";
 import axios from "axios";
 import FormData from "form-data";
-import { previous1Jan, todayDDMMYYYY, toInputDate, stringToDate } from "./parse.js";
+import { previous1Jan, todayDDMMYYYY, toInputDate, stringToDate, firstCurrentMonth } from "./parse.js";
 
 /**
  * Class with all PAL e3 API call methods
@@ -1223,14 +1223,18 @@ export default class PALAPI {
 	}
 
 	/**
-	 * Returns the cumulated IMO DCS voyages consumptions for the given vessel and year
+	 * Returns the cumulated IMO DCS voyages consumptions for the given vessel and, optionally, year.
+	 * It is meant to be run monthly, so any time of the month it's run, it will return cumulted results from 1 Jan until 1 of current month
 	 * @param {string} vesselName
-	 * @param {number} [year]
+	 * @param {number} [year] - YYYY
+	 * @param {number} [month] - 2 to 12
 	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
 	 */
-	async imoDcs(vesselName, year) {
+	async imoDcs(vesselName, year, month) {
 		console.time("IMO DCS");
 		return new Promise(async (resolve, error) => {
+			if (month && (month < 2 || month > 12 || String(month).length > 2)) throw new Error("Invalid month argument. Only 2-12 is accepted.");
+
 			const browser = await puppeteer.launch({ headless: "new" }); // for running in Node.js
 			// const browser = await puppeteer.launch({ executablePath: "./chromium/chrome.exe", headless: false }); // for .exe packages
 			const page = await browser.newPage();
@@ -1240,23 +1244,48 @@ export default class PALAPI {
 
 			// If year was provided
 			// if it's this year
-			if (year === new Date().getFullYear()) {
+			if (year === new Date().getFullYear() && !month) {
 				startDate = `0101${year}`;
-				reportDate = todayDDMMYYYY();
+				reportDate = firstCurrentMonth();
+
+				// if running in January of provided year
+				if (startDate === reportDate) {
+					startDate = previous1Jan();
+				}
+
 				// if it's another year
-			} else if (year && String(year).slice(0, 2) === "20") {
+			} else if (year && String(year).slice(0, 2) === "20" && !month) {
 				startDate = `0101${year}`;
-				reportDate = `3112${year}`;
-			} else {
-				// TODO what if running in Jan?
+				reportDate = `0101${year + 1}`;
+			}
+
+			// if current year and future month is provided, set month to current
+			else if (year === new Date().getFullYear() && parseInt(month) > parseInt(new Date().getMonth() + 1)) {
+				startDate = previous1Jan();
+				reportDate = firstCurrentMonth();
+			}
+
+			// if current year and another month is provided, except January
+			else if (year === new Date().getFullYear() && 1 < parseInt(month) <= 12) {
+				startDate = `0101${year}`;
+				reportDate = `01${String(month).padStart(2, "0")}${year}`;
+			}
+
+			// if another year and month provided
+			else if (year && String(year).slice(0, 2) === "20" && 1 < parseInt(month) <= 12) {
+				startDate = `0101${year}`;
+				reportDate = `01${String(month).padStart(2, "0")}${year}`;
+			}
+			// if no argument provided
+			else {
 				// else do it for current year, unless running in January
 				startDate = previous1Jan(); // 1 Jan of previous' month
-				reportDate = todayDDMMYYYY();
+				reportDate = firstCurrentMonth();
 			}
 
 			// override default timeout of 30000
 			page.setDefaultNavigationTimeout(60000);
-			console.log(`Starting IMO DCS data gathering for ${vesselName}...`);
+			console.log(`Starting IMO DCS data gathering for ${vesselName} for period ${startDate}-${reportDate}...`);
 
 			const navigationPromise = page.waitForNavigation();
 
@@ -1429,6 +1458,51 @@ export default class PALAPI {
 			distance = distance.replace(",", "");
 			distance = Number(distance);
 
+			// Read time at sea
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(17) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(17) > div > strong > span");
+			let hrsAtSea = await page.evaluate((el) => el.textContent, element);
+
+			// eliminate the comma from the value and convert it to number
+			hrsAtSea = hrsAtSea.replace(",", "");
+			hrsAtSea = Number(hrsAtSea);
+
+			// Read time at anchor
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
+			let hrsAtAnchor = await page.evaluate((el) => el.textContent, element);
+
+			// eliminate the comma from the value and convert it to number
+			hrsAtAnchor = hrsAtAnchor.replace(",", "");
+			hrsAtAnchor = Number(hrsAtAnchor);
+
+			// Read time adrift
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(19) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(19) > div > strong > span");
+			let hrsDrifting = await page.evaluate((el) => el.textContent, element);
+
+			// eliminate the comma from the value and convert it to number
+			hrsDrifting = hrsDrifting.replace(",", "");
+			hrsDrifting = Number(hrsDrifting);
+
+			// Read time adrift
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(20) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(20) > div > strong > span");
+			let hrsSteaming = await page.evaluate((el) => el.textContent, element);
+
+			// eliminate the comma from the value and convert it to number
+			hrsSteaming = hrsSteaming.replace(",", "");
+			hrsSteaming = Number(hrsSteaming);
+
+			// Read time adrift
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(21) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(21) > div > strong > span");
+			let hrsInPort = await page.evaluate((el) => el.textContent, element);
+
+			// eliminate the comma from the value and convert it to number
+			hrsInPort = hrsInPort.replace(",", "");
+			hrsInPort = Number(hrsInPort);
+
 			// Read Date of Arrival of Last Leg (DALL)
 			// Go through all legs 1 to 50 and if they exist, get the date of arrival of each leg and keep the last one, since that will be the latest
 			let DALL;
@@ -1445,7 +1519,7 @@ export default class PALAPI {
 
 			// Some DCS legs will finish after 1st of the current month and DALL could be after
 			// In this case, only need to consider DALL until 1 of the month, since DCS data is also only until that date
-			// Checking if DALL is later than current date and if so, consider it only until current date
+			// Checking if DALL is later than 1 of the month and if so, consider it only until the 1st
 			if (stringToDate(DALL) > stringToDate(reportDate)) {
 				DALL = reportDate;
 			}
@@ -1461,9 +1535,20 @@ export default class PALAPI {
 				startDate: `${startDate.slice(0, -6)}.${startDate.slice(2, -4)}.${startDate.slice(4)}`,
 				endDate: `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`,
 				distance,
+				seaHFO,
+				seaLFO,
+				seaMDO,
+				portHFO,
+				portLFO,
+				portMDO,
 				totalHFO,
 				totalLFO,
 				totalMDO,
+				hrsAtSea,
+				hrsAtAnchor,
+				hrsDrifting,
+				hrsSteaming,
+				hrsInPort,
 			};
 			resolve(response);
 		});
