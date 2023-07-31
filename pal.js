@@ -1278,7 +1278,7 @@ export default class PALAPI {
 			}
 			// if no argument provided
 			else {
-				// else do it for current year, unless running in January
+				// else do it for current year, unless running in January, in which case run for entire last year 1 Jan to 1 Jan
 				startDate = previous1Jan(); // 1 Jan of previous' month
 				reportDate = firstCurrentMonth();
 			}
