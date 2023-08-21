@@ -1,7 +1,8 @@
 import puppeteer from "puppeteer";
 import axios from "axios";
 import FormData from "form-data";
-import { previous1Jan, todayDDMMYYYY, toInputDate, stringToDate, firstCurrentMonth } from "./parse.js";
+import { previous1Jan, todayDDMMYYYY, toInputDate, stringToDate, firstCurrentMonth, dateToString } from "./parse.js";
+import qs from "qs";
 
 /**
  * Class with all PAL e3 API call methods
@@ -1552,6 +1553,89 @@ export default class PALAPI {
 			};
 			resolve(response);
 		});
+	}
+
+	/**
+	 * Gets all the vessels in PAL
+	 * @param {string[]} vessels Array of vessel names
+	 * @param {Date} date JS date object. Probably today()
+	 * @param {number} daysAhead how many days to look ahead
+	 * @return {Promise<Array>} Array of objects, each containing a vessel
+	 */
+	async getPlannedCrewChanges(vessels, date, daysAhead) {
+		console.time(`Crew planning request`);
+
+		let daysFromNow = date.getDate() + daysAhead;
+
+		// initialize as today and add daysAhead
+		let toDate = new Date();
+		toDate.setDate(daysFromNow);
+
+		let data = {
+			sort: "",
+			page: 1,
+			pageSize: 1000,
+			group: "",
+			filter: "",
+			ownersArray: "",
+			"sdcsArray[]": 1,
+			ownersArray: "",
+			fromDate: dateToString(date),
+			toDate: dateToString(toDate),
+			workGroupArray: "",
+			rankArray: "",
+			"rankGrpArray[]": 1,
+			"rankGrpArray[]": 31,
+			vslSubGroupArray: "",
+			vslTypeArray: "",
+			// "vesselArray[]": 246072,
+			// "commonVesselArray[]": 246072,
+			IsReliefDue: "true",
+			Days: 12,
+			ShowFullName: "Y",
+			IsReliefDue: "true",
+			IsMonths: "P",
+			isShowClicked: "true",
+			isShowClickedPageSize: "true",
+			ExcludePlanned: "false",
+			CheckLineUpCandidate: "N",
+			CheckIncludeOnboard: "N",
+			isMISRank: "N",
+			ApprovedPlansOnly: "N",
+			PendingPlansOnly: "N",
+		};
+
+		let vesselObjectIds = await this.#vesselNamesToObjectIds(vessels);
+		vesselObjectIds = vesselObjectIds.split(",");
+
+		for (let vessel of vesselObjectIds) {
+			data = { ...data, "vesselArray[]": vessel, "commonVesselArray[]": vessel };
+		}
+
+		console.log(data);
+
+		let options = {
+			method: "POST",
+			url: `${this.url}/palcrewing/CrewingPAL/Plan/GetCrewListForPlan`,
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			data: qs.stringify(data),
+		};
+
+		let response = await axios.request(options);
+		console.timeEnd(`Crew planning request`);
+		return response.data;
+
+		// Vessel
+		// Offsigner
+		// ReliefDue
+		// Rank
+		// PlannedRelief
+		// Reliever
 	}
 }
 
