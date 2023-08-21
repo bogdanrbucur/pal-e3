@@ -1560,7 +1560,7 @@ export default class PALAPI {
 	 * @param {string[]} vessels Array of vessel names
 	 * @param {Date} date JS date object. Probably today()
 	 * @param {number} daysAhead how many days to look ahead
-	 * @return {Promise<Array>} Array of objects, each containing a vessel
+	 * @return {Promise<Array>} Array of objects, each containing a crew change
 	 */
 	async getPlannedCrewChanges(vessels, date, daysAhead) {
 		console.time(`Crew planning request`);
@@ -1584,12 +1584,8 @@ export default class PALAPI {
 			toDate: dateToString(toDate),
 			workGroupArray: "",
 			rankArray: "",
-			"rankGrpArray[]": 1,
-			"rankGrpArray[]": 31,
 			vslSubGroupArray: "",
 			vslTypeArray: "",
-			// "vesselArray[]": 246072,
-			// "commonVesselArray[]": 246072,
 			IsReliefDue: "true",
 			Days: 12,
 			ShowFullName: "Y",
@@ -1608,11 +1604,15 @@ export default class PALAPI {
 		let vesselObjectIds = await this.#vesselNamesToObjectIds(vessels);
 		vesselObjectIds = vesselObjectIds.split(",");
 
+		data = qs.stringify(data);
+
 		for (let vessel of vesselObjectIds) {
-			data = { ...data, "vesselArray[]": vessel, "commonVesselArray[]": vessel };
+			data += `&vesselArray[]=${vessel}&commonVesselArray[]=${vessel}`;
 		}
 
-		console.log(data);
+		// add ranks
+		data += `&rankGrpArray[]=1`; // CPT
+		data += `&rankGrpArray[]=31`; // C/E
 
 		let options = {
 			method: "POST",
@@ -1623,19 +1623,32 @@ export default class PALAPI {
 				Cookie: `.BSMAuthCookie=${this.#cookie}`,
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
-			data: qs.stringify(data),
+			data: data,
 		};
 
 		let response = await axios.request(options);
 		console.timeEnd(`Crew planning request`);
-		return response.data;
+		console.log(`Returned ${response.data.Total} results`);
 
-		// Vessel
-		// Offsigner
-		// ReliefDue
-		// Rank
-		// PlannedRelief
-		// Reliever
+		const results = response.data.Data;
+
+		let responseArray = [];
+
+		results.forEach((r) => {
+			responseArray.push({
+				vessel: r.Vessel,
+				rank: r.Rank,
+				offName: r.Offsigner,
+				offDueDate: r.ReliefDue.slice(0, 11),
+				plannedRelief: r.PlannedRelief,
+				onName: r.Reliever,
+				port: r.PlannedPort,
+				remarks: r.RelieverRemarks,
+				onCrewAgent: r.CscExt,
+				offCrewAgent: r.oFF_CscExt,
+			});
+		});
+		return responseArray;
 	}
 }
 
