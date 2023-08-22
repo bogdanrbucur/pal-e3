@@ -1635,6 +1635,8 @@ export default class PALAPI {
 
 		const results = response.data.Data;
 
+		console.log(results);
+
 		let responseArray = [];
 
 		results.forEach((r) => {
@@ -1645,6 +1647,7 @@ export default class PALAPI {
 				offDueDate: r.ReliefDue.slice(0, 11),
 				plannedRelief: r.PlannedRelief,
 				onName: r.Reliever,
+				onJoinDate: r.ExpJoiningDate,
 				port: r.PlannedPort,
 				remarks: r.RelieverRemarks,
 				onCrewAgent: r.CscExt,
