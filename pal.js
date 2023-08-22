@@ -1639,7 +1639,10 @@ export default class PALAPI {
 
 		let responseArray = [];
 
-		results.forEach((r) => {
+		for (const r of results) {
+			// TODO get reliever details based on `RelieverEmpId`
+			const relieverContacts = await this.getSeafarerContacts(r.RelieverEmpId);
+
 			responseArray.push({
 				vessel: r.Vessel,
 				rank: r.Rank,
@@ -1647,14 +1650,48 @@ export default class PALAPI {
 				offDueDate: r.ReliefDue.slice(0, 11),
 				plannedRelief: r.PlannedRelief,
 				onName: r.Reliever,
+				onPhone: relieverContacts.phone, //
+				onMobile: relieverContacts.mobile, //
+				onEmail: relieverContacts.email, //
+				onSkype: relieverContacts.skype,
 				onJoinDate: r.ExpJoiningDate,
 				port: r.PlannedPort,
 				remarks: r.RelieverRemarks,
 				onCrewAgent: r.CscExt,
 				offCrewAgent: r.oFF_CscExt,
 			});
-		});
+		}
 		return responseArray;
+	}
+
+	async getSeafarerContacts(empId) {
+		let data = {
+			EmpId: empId,
+			localLang: "N",
+		};
+
+		let options = {
+			method: "POST",
+			url: `${this.url}/palcrewing/CrewingPAL/Address/PopulateData`,
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			data: qs.stringify(data),
+		};
+
+		let response = await axios.request(options);
+		const results = {
+			email: response.data.Email,
+			phone: response.data.PPhone1Code + response.data.PPhone1,
+			mobile: response.data.PMobileCode + response.data.PMobile,
+			address: response.data.PAddress1 + response.data.PCity,
+			skype: response.data.SkypeOrIm,
+		};
+
+		return results;
 	}
 }
 
