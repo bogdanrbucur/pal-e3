@@ -1560,9 +1560,10 @@ export default class PALAPI {
 	 * @param {string[]} vessels Array of vessel names
 	 * @param {Date} date JS date object. Probably today()
 	 * @param {number} daysAhead how many days to look ahead
+	 * @param {number[]} ranks array of codes representing the ranks 1 - CPT, 31 - C/E
 	 * @return {Promise<Array>} Array of objects, each containing a crew change
 	 */
-	async getPlannedCrewChanges(vessels, date, daysAhead) {
+	async getPlannedCrewChanges(vessels, date, daysAhead, ranks) {
 		console.time(`Crew planning request`);
 
 		let daysFromNow = date.getDate() + daysAhead;
@@ -1606,13 +1607,15 @@ export default class PALAPI {
 
 		data = qs.stringify(data);
 
+		// add vessels ObjectIds
 		for (let vessel of vesselObjectIds) {
 			data += `&vesselArray[]=${vessel}&commonVesselArray[]=${vessel}`;
 		}
 
 		// add ranks
-		data += `&rankGrpArray[]=1`; // CPT
-		data += `&rankGrpArray[]=31`; // C/E
+		for (let rank of ranks) {
+			data += `&rankGrpArray[]=${rank}`;
+		}
 
 		let options = {
 			method: "POST",

@@ -200,6 +200,30 @@ console.log(dcs);
 }
 ```
 
+#### Getting upcoming crew changes for the next 10 days CPT and C/E ranks
+
+```js
+// 1 = CPT, 31 = C/E
+const crewChange = await palapi.getPlannedCrewChanges(vessels, new Date(), 10, [1, 31]);
+console.log(crewChange);
+
+// Get the  objects array
+[
+{
+    vessel: 'Chem Mia',
+    rank: 'C/E',
+    offName: 'JOHN DOE',
+    offDueDate: '09-Aug-2023',
+    plannedRelief: '24-Aug-2023',
+    onName: 'JANE DOE',
+    port: 'Buenaventura',
+    remarks: 'Briefing in office / process Schengen visa',
+    onCrewAgent: 'SOMETHING MARITIME AGENCY, INC.',
+    offCrewAgent: 'SOMETHING MARITIME AGENCY, INC.'
+  }
+]
+```
+
 ### Accessing all available API methods and data manipulation functions
 
 All available PAL API call methods are available on the `palapi` object using IntelliSense:
