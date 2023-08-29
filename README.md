@@ -200,6 +200,24 @@ console.log(dcs);
 }
 ```
 
+#### Getting all drills for a given vessel name
+
+```js
+let drills = await palapi.getDrills("Chem alya");
+console.log(drills);
+
+// Get the result object
+{
+  DrillName: 'Lowering & Launching of Life Boat',
+  ReferenceNo: 'CMIA/DRILL/2022/Z/427',
+  Vessel: 'Chem Mia',
+  DrillConductedOn: '09-Nov-2017 00:00:00',
+  DrillStatus: 'Close',
+  ...
+}
+
+```
+
 #### Getting upcoming crew changes for the next 10 days CPT and C/E ranks
 
 ```js
