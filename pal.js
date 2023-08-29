@@ -1385,6 +1385,17 @@ export default class PALAPI {
 			}
 			console.log(`Results displayed`);
 
+			// Select 500 items per page
+			await page.waitForSelector("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+			await page.click("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("ArrowDown");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("ArrowDown");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("Enter");
+			console.log("Selected 500 items per page");
+
 			// Read consumption values
 			// Sea HFO
 			await new Promise((r) => setTimeout(r, 300));
@@ -1505,9 +1516,9 @@ export default class PALAPI {
 			hrsInPort = Number(hrsInPort);
 
 			// Read Date of Arrival of Last Leg (DALL)
-			// Go through all legs 1 to 50 and if they exist, get the date of arrival of each leg and keep the last one, since that will be the latest
+			// Go through all legs 1 to 500 and if they exist, get the date of arrival of each leg and keep the last one, since that will be the latest
 			let DALL;
-			for (let i = 1; i < 50; i++) {
+			for (let i = 1; i < 500; i++) {
 				element = await page.$(`#grdResultIMO > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(7)`);
 				if (element) {
 					DALL = await page.evaluate((el) => el.textContent, element); // expect DD-MMM-YYYY HH:mm
