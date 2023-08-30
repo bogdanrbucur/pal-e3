@@ -153,3 +153,12 @@ export function todayDDMMYYYY() {
 	logDate = String(logDate.getDate()).padStart(2, "0") + String(logDate.getMonth() + 1).padStart(2, "0") + String(logDate.getFullYear());
 	return logDate;
 }
+
+/**
+ * Transform JavaScript Date objects to DDMMYYYY strings
+ * @param {Date} input JavaScript Date object
+ * @return {string} String in format DDMMYYYY
+ */
+export function jsDateToInputString(input) {
+	return `${String(input.getDate(input)).padStart(2, "0")}${String(input.getMonth(input) + 1).padStart(2, "0")}${input.getFullYear()}`;
+}
