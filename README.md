@@ -171,10 +171,10 @@ const main = async () => {
 main();
 ```
 
-#### Getting IMO DCS cummulated results from 1 Jan until current month
+#### Getting IMO DCS cummulated results from 1 Jan until current date
 
 ```js
-let dcs = await palapi.imoDcs("Chem Mia");
+let dcs = await palapi.imoDcs("Chem Mia", new Date());
 console.log(dcs);
 
 // Get the result object

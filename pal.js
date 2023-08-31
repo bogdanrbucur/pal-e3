@@ -1,7 +1,7 @@
 import puppeteer from "puppeteer";
 import axios from "axios";
 import FormData from "form-data";
-import { previous1Jan, todayDDMMYYYY, toInputDate, stringToDate, firstCurrentMonth, dateToString } from "./parse.js";
+import { previous1Jan, todayDDMMYYYY, toInputDate, stringToDate, firstCurrentMonth, dateToString, jsDateToInputString } from "./parse.js";
 import qs from "qs";
 
 /**
@@ -1231,10 +1231,13 @@ export default class PALAPI {
 	 * @param {number} [month] - 2 to 12
 	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
 	 */
-	async imoDcs(vesselName, year, month) {
+	async imoDcs(vesselName, date, runFromPrevYear = false) {
 		console.time("IMO DCS");
 		return new Promise(async (resolve, error) => {
-			if (month && (month < 2 || month > 12 || String(month).length > 2)) throw new Error("Invalid month argument. Only 2-12 is accepted.");
+			// check argument validity
+			if (typeof date !== "object") throw new Error("Invalid date argument. Only JavaScript Date objects are accepted.");
+			if (!(new Date("1971-01-01") < date) || !(date < new Date("2050-01-01"))) throw new Error("Invalid date argument. Only JavaScript Date objects are accepted.");
+			if (typeof runFromPrevYear !== "boolean") throw new Error("Invalid runFromPrevYear argument. Only boolean values are accepted.");
 
 			const browser = await puppeteer.launch({ headless: "new" }); // for running in Node.js
 			// const browser = await puppeteer.launch({ executablePath: "./chromium/chrome.exe", headless: false }); // for .exe packages
@@ -1243,46 +1246,12 @@ export default class PALAPI {
 			let startDate; // report start date, normally 1 Jan
 			let reportDate; // normally 1 of the current month
 
-			// If year was provided
-			// if it's this year
-			if (year === new Date().getFullYear() && !month) {
-				startDate = `0101${year}`;
-				reportDate = firstCurrentMonth();
+			reportDate = jsDateToInputString(date);
+			const year = date.getFullYear();
 
-				// if running in January of provided year
-				if (startDate === reportDate) {
-					startDate = previous1Jan();
-				}
-
-				// if it's another year
-			} else if (year && String(year).slice(0, 2) === "20" && !month) {
-				startDate = `0101${year}`;
-				reportDate = `0101${year + 1}`;
-			}
-
-			// if current year and future month is provided, set month to current
-			else if (year === new Date().getFullYear() && parseInt(month) > parseInt(new Date().getMonth() + 1)) {
-				startDate = previous1Jan();
-				reportDate = firstCurrentMonth();
-			}
-
-			// if current year and another month is provided, except January
-			else if (year === new Date().getFullYear() && 1 < parseInt(month) <= 12) {
-				startDate = `0101${year}`;
-				reportDate = `01${String(month).padStart(2, "0")}${year}`;
-			}
-
-			// if another year and month provided
-			else if (year && String(year).slice(0, 2) === "20" && 1 < parseInt(month) <= 12) {
-				startDate = `0101${year}`;
-				reportDate = `01${String(month).padStart(2, "0")}${year}`;
-			}
-			// if no argument provided
-			else {
-				// else do it for current year, unless running in January, in which case run for entire last year 1 Jan to 1 Jan
-				startDate = previous1Jan(); // 1 Jan of previous' month
-				reportDate = firstCurrentMonth();
-			}
+			// if required to run from previous year, set start date to 1 Jan previous year, else 1 Jan this year
+			if (runFromPrevYear) startDate = `0101${year - 1}`;
+			else startDate = `0101${year}`;
 
 			// override default timeout of 30000
 			page.setDefaultNavigationTimeout(60000);
