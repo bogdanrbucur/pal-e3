@@ -174,6 +174,8 @@ main();
 #### Getting IMO DCS cummulated results from 1 Jan until current date
 
 ```js
+// optional third argument true if needed to run from pervious 1 Jan
+// i.e. if full IMO DCS data is not yet available
 let dcs = await palapi.imoDcs("Chem Mia", new Date());
 console.log(dcs);
 
@@ -227,19 +229,19 @@ console.log(crewChange);
 
 // Get the  objects array
 [
-{
-    vessel: 'Chem Mia',
-    rank: 'C/E',
-    offName: 'JOHN DOE',
-    offDueDate: '09-Aug-2023',
-    plannedRelief: '24-Aug-2023',
-    onName: 'JANE DOE',
-    port: 'Buenaventura',
-    remarks: 'Briefing in office / process Schengen visa',
-    onCrewAgent: 'SOMETHING MARITIME AGENCY, INC.',
-    offCrewAgent: 'SOMETHING MARITIME AGENCY, INC.'
-  }
-]
+	{
+		vessel: "Chem Mia",
+		rank: "C/E",
+		offName: "JOHN DOE",
+		offDueDate: "09-Aug-2023",
+		plannedRelief: "24-Aug-2023",
+		onName: "JANE DOE",
+		port: "Buenaventura",
+		remarks: "Briefing in office / process Schengen visa",
+		onCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
+		offCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
+	},
+];
 ```
 
 ### Accessing all available API methods and data manipulation functions
@@ -250,16 +252,6 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.3.4
+### Release notes 1.4.5
 
-- added `voyageAlertConfig` method for Voyage User Alert Configuration
-- added `crewAllocation` method for MDM Crewing Vessel User Allocation
-- many implementation details methods renamed and made private
-- made all URL endpoints dynamic
-- fix private method response destructuring bug
-- added `imoDcs` method for IMO DCS reports
-
-### Release notes 1.2.0
-
-- `purchaseAllocation` method now supports JOB allocations
-- `getPRCtemplateIds` renamed to `getCurrentPRCallocation` as it's a more accurate name
+- `imoDcs()` method change to work with any date and start from previous years
