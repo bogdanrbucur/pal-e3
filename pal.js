@@ -438,6 +438,7 @@ export default class PALAPI {
 		// get users by ID
 		let usersResponse = await this.#usersToIdAndUserName(users);
 		let usersIds = usersResponse.id;
+		if (!usersIds) usersIds = "";
 		console.log(`UsersIds: ${usersIds}`);
 
 		// get category by ID
@@ -789,6 +790,7 @@ export default class PALAPI {
 		let vslObjectId = await this.#vesselNamesToObjectIds(vessel);
 		let usersResponse = await this.#usersToIdAndUserName(users);
 		let userIds = usersResponse.id;
+		if (!userIds) userIds = "";
 		let rolesResponse = await this.#getVoyAlertRoles(vslId, vslObjectId);
 
 		// get roleCode
