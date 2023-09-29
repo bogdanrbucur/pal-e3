@@ -125,7 +125,7 @@ export default class PALAPI {
 		let vesslesIdsString = await this.#vesselNamesToObjectIds(vessels);
 
 		// convert the array of vessel names to string of IDs
-		let catoriesIds = await this.#categoriesNamesToIds(categories, docType);
+		let catoriesIds = await this.#categoriesNamesToIds(categories, "PROC");
 
 		// build the Form body
 		let body = new FormData();
