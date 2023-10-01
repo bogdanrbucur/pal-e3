@@ -35,11 +35,6 @@ export default class PALAPI {
 	 */
 	#cachedUsers;
 	/**
-	 * cached Voyage alert roles
-	 * @type {string[]}
-	 */
-	#cachedVoyageAlertRoles;
-	/**
 	 * cached vessels
 	 * @type {string[]}
 	 */
@@ -908,20 +903,11 @@ export default class PALAPI {
 			data: bodyFormData,
 		};
 
-		if (this.#cachedVoyageAlertRoles) {
-			console.log("Returned Voyage alert roles from cache");
-			console.timeEnd("Voyage alert roles request");
-			return this.#cachedVoyageAlertRoles;
-		}
-
 		let response = await axios.request(options);
 		console.log("Got response for Voyage alert roles");
 		console.timeEnd("Voyage alert roles request");
 
 		if (response.data.Data) {
-			// cache the data
-			this.#cachedVoyageAlertRoles = response.data.Data;
-
 			return response.data.Data;
 		} else {
 			throw new Error("Failed to retrieve Voyage User Alert Configuration roles!");
