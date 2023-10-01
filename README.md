@@ -252,8 +252,6 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.4.7
+### Release notes 1.4.8
 
-- Reverted to `axios` 0.27.2 for `pkg` compatibility
-- Fixed bug for removing users in `purchaseAllocation()` method
-- Fixed bug for removing users in `voyageAlertConfig()` method
+- added cache for users and VoyageAlertRoles
