@@ -484,6 +484,8 @@ export default class PALAPI {
 				ApprovalTemplateId = approvalsIds.ApprovalTemplateId;
 				ApprovalCycleTemplateId = approvalsIds.ApprovalCycleTemplateId;
 				VesselAllocationId = approvalsIds.VesselAllocationId;
+
+				if (ApprovalTemplateId === 0 && ApprovalCycleTemplateId === 0 && VesselAllocationId === 0) throw new Error("No template assigned!");
 				break;
 			case "JOB":
 				ApprovalTemplateId = 0;
