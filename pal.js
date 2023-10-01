@@ -345,7 +345,10 @@ export default class PALAPI {
 		filteredVessels.forEach((vsl) => {
 			vesselsIds += vsl.VesselObjectId += ",";
 		});
-		vesselsIds = vesselsIds.slice(0, -1);
+
+		// prune the , at the end
+		while (vesselsIds.charAt(vesselsIds.length - 1) === ",") vesselsIds = vesselsIds.slice(0, -1);
+
 		if (vesselsIds === "") throw new Error("Vessel not found!");
 		return vesselsIds;
 	}
@@ -366,7 +369,10 @@ export default class PALAPI {
 		filteredVessels.forEach((vsl) => {
 			vesselsIds += vsl.VesselId += ",";
 		});
-		vesselsIds = vesselsIds.slice(0, -1);
+
+		// prune the , at the end
+		while (vesselsIds.charAt(vesselsIds.length - 1) === ",") vesselsIds = vesselsIds.slice(0, -1);
+
 		if (vesselsIds === "") throw new Error("Vessel not found!");
 		return vesselsIds;
 	}
@@ -669,8 +675,13 @@ export default class PALAPI {
 			userIds += usr.UserId += ",";
 			username += usr.Name += ",";
 		});
-		userIds = userIds.slice(0, -1);
-		username = username.slice(0, -1);
+
+		// prune the , at the end and account for ,,
+		while (userIds.charAt(userIds.length - 1) === ",") userIds = userIds.slice(0, -1);
+		while (username.charAt(username.length - 1) === ",") username = username.slice(0, -1);
+		userIds = userIds.replaceAll(",,", ",");
+		username = username.replaceAll(",,", ",");
+
 		if (userIds === "") throw new Error("User not found!");
 
 		return { id: userIds, username: username };
@@ -814,7 +825,7 @@ export default class PALAPI {
 	 */
 	async voyageAlertConfig(vessel, role, users) {
 		console.log("Start request for Voyage Alert Config...");
-		console.time("Voyage Alert Config request");
+		console.log(`Start for ${vessel} ${role} ${users}`);
 
 		// TODO calling the same API twice? ew...
 		let vslId = await this.#vesselNamesToIds(vessel);
@@ -834,6 +845,24 @@ export default class PALAPI {
 		if (roleId === undefined) {
 			throw new Error("Role not found!");
 		}
+
+		// Check if the exact same allocation is already done
+		rolesResponse.forEach((r) => {
+			if (userIds && r.UserIds === userIds && r.AlertRoleName.toUpperCase() === role.toUpperCase()) {
+				console.log("Allocation already done. Skipping...");
+				return true;
+			}
+		});
+
+		// TODO to add another user on top of an existing user, first need to remove all users, otherwise it fails
+		// check if one of the users already exists, if so remove all users
+		// rolesResponse.forEach(async (r) => {
+		// 	console.log(`${r.UserIds} - ${userIds}`);
+		// 	if (userIds !== "" && r.UserIds !== "" && userIds.includes(r.UserIds) && r.AlertRoleName.toUpperCase() === role.toUpperCase()) {
+		// 		console.log(`User(s) ${users} already allocated. Removing all users first...`);
+		// 		await this.voyageAlertConfig(vessel, role, ["mariapps"]);
+		// 	}
+		// });
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -864,11 +893,11 @@ export default class PALAPI {
 
 		let response = await axios.request(options);
 		console.log("Got response for Voyage Alert Config");
-		console.timeEnd("Voyage Alert Config request");
 
 		if (response.data.isSuccess) {
 			return response.data.isSuccess;
 		} else {
+			console.log(response.data);
 			throw new Error("Voyage User Alert Configuration allocation failed!");
 		}
 	}

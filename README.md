@@ -252,6 +252,7 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.4.10
+### Release notes 1.5.0
 
-- remove cache for VoyageAlertRoles as it's vessel specific
+- fixed many internal parsing methods
+- implemented skippable voyage alert config if allocation is already done
