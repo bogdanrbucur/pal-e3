@@ -824,8 +824,7 @@ export default class PALAPI {
 	 * @return {Promise<boolean>} success or not
 	 */
 	async voyageAlertConfig(vessel, role, users) {
-		console.log("Start request for Voyage Alert Config...");
-		console.log(`Start for ${vessel} ${role} ${users}`);
+		console.log(`Start Voyage Alert Config for ${vessel} ${role} ${users}`);
 
 		// TODO calling the same API twice? ew...
 		let vslId = await this.#vesselNamesToIds(vessel);
