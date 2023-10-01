@@ -39,6 +39,11 @@ export default class PALAPI {
 	 * @type {string[]}
 	 */
 	#cachedVoyageAlertRoles;
+	/**
+	 * cached vessels
+	 * @type {string[]}
+	 */
+	#cachedVessels;
 
 	/**
 	 * Logs in to PAL using provided credentials, retrieves the session cookie and sets the cookie property
@@ -311,9 +316,19 @@ export default class PALAPI {
 			data: bodyFormData,
 		};
 
+		if (this.#cachedVessels) {
+			console.log("Returned cached vessels");
+			console.timeEnd("Vessels POST request");
+			return this.#cachedVessels;
+		}
+
 		let response = await axios.request(options);
 		console.log("Got POST response for vessels");
 		console.timeEnd("Vessels POST request");
+
+		// cache the vessels
+		this.#cachedVessels = response.data.Data;
+
 		return response.data.Data;
 	}
 
