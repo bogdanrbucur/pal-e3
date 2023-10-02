@@ -254,4 +254,4 @@ All available data manipulation functions can be accessed from the `PAL` object 
 
 ### Release notes 1.5.5
 
-- reduced Purchase allocation logging
+- `purchaseAllocation()` support for empty array users input

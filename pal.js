@@ -460,9 +460,15 @@ export default class PALAPI {
 		// console.log(`VesselId: ${vslIds}`);
 
 		// get users by ID
-		let usersResponse = await this.#usersToIdAndUserName(users);
-		let usersIds = usersResponse.id;
-		if (!usersIds) usersIds = "";
+		let usersIds;
+		// if users = [""]
+		if (users[0] === "" || users.length === 0) {
+			usersIds = "";
+		} else {
+			let usersResponse = await this.#usersToIdAndUserName(users);
+			usersIds = usersResponse.id;
+			if (!usersIds) usersIds = "";
+		}
 		console.log(`UsersIds: ${usersIds}`);
 
 		// get category by ID
