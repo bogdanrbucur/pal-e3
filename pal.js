@@ -843,6 +843,7 @@ export default class PALAPI {
 
 		// get roleCode
 		let roleId;
+
 		rolesResponse.forEach((responseRole) => {
 			if (responseRole.AlertRoleName.toUpperCase() === role.toUpperCase()) {
 				roleId = responseRole.AlertRoleId;
@@ -860,15 +861,11 @@ export default class PALAPI {
 			}
 		});
 
-		// TODO to add another user on top of an existing user, first need to remove all users, otherwise it fails
-		// check if one of the users already exists, if so remove all users
-		// rolesResponse.forEach(async (r) => {
-		// 	console.log(`${r.UserIds} - ${userIds}`);
-		// 	if (userIds !== "" && r.UserIds !== "" && userIds.includes(r.UserIds) && r.AlertRoleName.toUpperCase() === role.toUpperCase()) {
-		// 		console.log(`User(s) ${users} already allocated. Removing all users first...`);
-		// 		await this.voyageAlertConfig(vessel, role, ["mariapps"]);
-		// 	}
-		// });
+		// !debug
+		console.log("vslId", vslId);
+		console.log("vslObjectId", vslObjectId);
+		console.log("roleId", roleId);
+		console.log("userIds", userIds);
 
 		// build the Form body
 		let bodyFormData = new FormData();
