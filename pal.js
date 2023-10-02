@@ -450,14 +450,14 @@ export default class PALAPI {
 		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
 		if (docType === "JOB" && template == null) throw new Error("Approval template is mandatory for JOB document type!");
 
-		console.log("Start POST request for PRC Allocation...");
+		console.log(`Start request for PRC Allocation: ${vessel} ${docType}-${category}: ${role}: ${users}`);
 		console.time("PRC allocation");
 
 		// convert the array of vessel names to string of IDs
 		let vslObjectIds = await this.#vesselNamesToObjectIds(vessel);
-		console.log(`VesselObjectId: ${vslObjectIds}`);
+		// console.log(`VesselObjectId: ${vslObjectIds}`);
 		let vslIds = await this.#vesselNamesToIds(vessel);
-		console.log(`VesselId: ${vslIds}`);
+		// console.log(`VesselId: ${vslIds}`);
 
 		// get users by ID
 		let usersResponse = await this.#usersToIdAndUserName(users);
@@ -467,7 +467,7 @@ export default class PALAPI {
 
 		// get category by ID
 		let catId = await this.#categoriesNamesToIds(category, docType);
-		console.log(`CategoryId: ${catId}`);
+		// console.log(`CategoryId: ${catId}`);
 
 		// Define ApprovalCycleTemplateId and ApprovalTemplateId depending on the document type
 		let approvalsIds;
@@ -657,6 +657,7 @@ export default class PALAPI {
 	 */
 	async #usersToIdAndUserName(usr) {
 		if (usr === "") return "";
+		if (user === null) return "";
 
 		let users = await this.getUsers();
 
