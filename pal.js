@@ -686,8 +686,8 @@ export default class PALAPI {
 		// prune the , at the end and account for ,,
 		while (userIds.charAt(userIds.length - 1) === ",") userIds = userIds.slice(0, -1);
 		while (username.charAt(username.length - 1) === ",") username = username.slice(0, -1);
-		userIds = userIds.replaceAll(",,", ",");
-		username = username.replaceAll(",,", ",");
+		while (userIds.includes(",,")) userIds = userIds.replaceAll(",,", ",");
+		while (username.includes(",,")) username = username.replaceAll(",,", ",");
 
 		if (userIds === "") throw new Error("User not found!");
 
