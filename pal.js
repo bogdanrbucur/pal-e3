@@ -384,8 +384,7 @@ export default class PALAPI {
 	 */
 	async #getPurchaseCategories(docType) {
 		if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");
-		console.log("Start POST request for Purchase categories...");
-		console.time("Purchase categories POST request");
+		console.time("Purchase categories request");
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -407,8 +406,7 @@ export default class PALAPI {
 		};
 
 		let response = await axios.request(options);
-		console.log("Got POST response for Purchase categories");
-		console.timeEnd("Purchase categories POST request");
+		console.timeEnd("Purchase categories request");
 		return response.data;
 	}
 
@@ -453,7 +451,7 @@ export default class PALAPI {
 		if (docType === "JOB" && template == null) throw new Error("Approval template is mandatory for JOB document type!");
 
 		console.log("Start POST request for PRC Allocation...");
-		console.time("PRC allocation POST request");
+		console.time("PRC allocation");
 
 		// convert the array of vessel names to string of IDs
 		let vslObjectIds = await this.#vesselNamesToObjectIds(vessel);
@@ -535,13 +533,13 @@ export default class PALAPI {
 			throw new Error("Role not found!");
 		}
 
-		console.log(`ApprovalCycleTemplateId: ${ApprovalCycleTemplateId}`);
-		console.log(`ApprovalTemplateId: ${ApprovalTemplateId}`);
-		console.log(`CategoryId: ${catId}`);
-		console.log(`RoleCode: ${roleCode}`);
-		console.log(`RoleId: ${roleId}`);
-		console.log(`UsersIds: ${usersIds}`);
-		console.log(`VesselAllocationId: ${VesselAllocationId}`);
+		// console.log(`ApprovalCycleTemplateId: ${ApprovalCycleTemplateId}`);
+		// console.log(`ApprovalTemplateId: ${ApprovalTemplateId}`);
+		// console.log(`CategoryId: ${catId}`);
+		// console.log(`RoleCode: ${roleCode}`);
+		// console.log(`RoleId: ${roleId}`);
+		// console.log(`UsersIds: ${usersIds}`);
+		// console.log(`VesselAllocationId: ${VesselAllocationId}`);
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -587,7 +585,7 @@ export default class PALAPI {
 
 		let response = await axios.request(options);
 		console.log("Got POST response for Vessels IDs");
-		console.timeEnd("PRC allocation POST request");
+		console.timeEnd("PRC allocation");
 
 		// validate the action
 		// if any error exists, return false
