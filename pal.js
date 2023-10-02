@@ -469,7 +469,7 @@ export default class PALAPI {
 			usersIds = usersResponse.id;
 			if (!usersIds) usersIds = "";
 		}
-		console.log(`UsersIds: ${usersIds}`);
+		// console.log(`UsersIds: ${usersIds}`);
 
 		// get category by ID
 		let catId = await this.#categoriesNamesToIds(category, docType);

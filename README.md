@@ -252,6 +252,6 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.5.5
+### Release notes 1.5.8
 
-- `purchaseAllocation()` support for empty array users input
+- reduced the console outputs for Purchase allocations
