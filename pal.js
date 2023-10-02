@@ -657,7 +657,7 @@ export default class PALAPI {
 	 */
 	async #usersToIdAndUserName(usr) {
 		if (usr === "") return "";
-		if (user === null) return "";
+		if (usr === null) return "";
 
 		let users = await this.getUsers();
 
