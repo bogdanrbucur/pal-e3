@@ -862,10 +862,10 @@ export default class PALAPI {
 		});
 
 		// !debug
-		console.log("vslId", vslId);
-		console.log("vslObjectId", vslObjectId);
-		console.log("roleId", roleId);
-		console.log("userIds", userIds);
+		// console.log("vslId", vslId);
+		// console.log("vslObjectId", vslObjectId);
+		// console.log("roleId", roleId);
+		// console.log("userIds", userIds);
 
 		// build the Form body
 		let bodyFormData = new FormData();
@@ -1787,6 +1787,40 @@ export default class PALAPI {
 
 		let response = await axios.request(options);
 		console.timeEnd("Drills POST request");
+		return response.data.Data;
+	}
+
+	/**
+	 * Get the pending list for Purchase docId
+	 * @param {number} docId
+	 * @return {Promise<Object[]>} Array of actions objects
+	 */
+	async getPendingList(docId) {
+		console.time("Pending list request");
+
+		// build the Form body
+		let bodyFormData = new FormData();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("group", "");
+		bodyFormData.append("filter", "");
+		bodyFormData.append("docId", docId);
+		bodyFormData.append("pageType", "AQT_DEF"); // AQT_DEF or PO_ALL
+		bodyFormData.append("docType", 1);
+		bodyFormData.append("isShow", "true");
+
+		let options = {
+			method: "POST",
+			url: `${this.url}/palpurchase/SharedPlugins/ApprovalList/GetApprovalList`,
+			headers: {
+				Accept: "*/*",
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
+				Cookie: `.BSMAuthCookie=${this.#cookie}`,
+			},
+			data: bodyFormData,
+		};
+
+		let response = await axios.request(options);
+		console.timeEnd("Pending list request");
 		return response.data.Data;
 	}
 }
