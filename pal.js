@@ -470,7 +470,9 @@ export default class PALAPI {
 				usersIds = usersResponse.id;
 			} catch (err) {
 				console.error(err);
-				process.exit(1);
+				// this will not throw, but allocation won't happen
+				usersIds = "99999999999"
+				// process.exit(1);
 			}
 			if (!usersIds) usersIds = "";
 		}
