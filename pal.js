@@ -689,7 +689,8 @@ export default class PALAPI {
 		while (userIds.includes(",,")) userIds = userIds.replaceAll(",,", ",");
 		while (username.includes(",,")) username = username.replaceAll(",,", ",");
 
-		if (userIds === "") throw new Error("User not found!");
+		// if (userIds === "") throw new Error("User not found!");
+		if (userIds === "") return console.error("User not found!");
 
 		return { id: userIds, username: username };
 	}
