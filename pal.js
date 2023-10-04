@@ -337,7 +337,7 @@ export default class PALAPI {
 		if (typeof vesselsArray === "string") vesselsArray = vesselsArray.toUpperCase();
 		else vesselsArray = vesselsArray.map((vsl) => vsl.toUpperCase());
 
-		console.log(vesselsArray);
+		// console.log(vesselsArray);
 
 		let vessels = await this.getVessels();
 		let filteredVessels = vessels.filter((vessel) => vesselsArray.includes(vessel.VesselName));
