@@ -466,7 +466,12 @@ export default class PALAPI {
 			usersIds = "";
 		} else {
 			let usersResponse = await this.#usersToIdAndUserName(users);
-			usersIds = usersResponse.id;
+			try {
+				usersIds = usersResponse.id;
+			} catch (err) {
+				console.error(err);
+				process.exit(1);
+			}
 			if (!usersIds) usersIds = "";
 		}
 		// console.log(`UsersIds: ${usersIds}`);
