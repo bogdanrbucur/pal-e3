@@ -1680,7 +1680,7 @@ export default class PALAPI {
 
 		const results = response.data.Data;
 
-		console.log(results);
+		// console.log(results);
 
 		let responseArray = [];
 
