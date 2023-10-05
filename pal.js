@@ -471,7 +471,7 @@ export default class PALAPI {
 			} catch (err) {
 				console.error(err);
 				// this will not throw, but allocation won't happen
-				usersIds = "99999999999"
+				usersIds = "99999999999";
 				// process.exit(1);
 			}
 			if (!usersIds) usersIds = "";
@@ -1298,10 +1298,9 @@ export default class PALAPI {
 
 	/**
 	 * Returns the cumulated IMO DCS voyages consumptions for the given vessel and, optionally, year.
-	 * It is meant to be run monthly, so any time of the month it's run, it will return cumulted results from 1 Jan until 1 of current month
+	 * It will normally run from 1 Jan of current year until given date, unless the year is also specified
 	 * @param {string} vesselName
 	 * @param {number} [year] - YYYY
-	 * @param {number} [month] - 2 to 12
 	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
 	 */
 	async imoDcs(vesselName, date, runFromPrevYear = false) {
@@ -1830,6 +1829,275 @@ export default class PALAPI {
 		let response = await axios.request(options);
 		console.timeEnd("Pending list request");
 		return response.data.Data;
+	}
+
+	/**
+	 * Returns the cumulated EU MRV voyages consumptions for the given vessel and, optionally, year.
+	 * It will normally run from 1 Jan of current year until given date, unless the year is also specified
+	 * @param {string} vesselName
+	 * @param {number} [year] - YYYY
+	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
+	 */
+	async eumrv(vesselName, date, runFromPrevYear = false) {
+		console.time("EU MRV");
+		return new Promise(async (resolve, error) => {
+			// check argument validity
+			if (typeof date !== "object") throw new Error("Invalid date argument. Only JavaScript Date objects are accepted.");
+			if (!(new Date("1971-01-01") < date) || !(date < new Date("2050-01-01"))) throw new Error("Invalid date argument. Only JavaScript Date objects are accepted.");
+			if (typeof runFromPrevYear !== "boolean") throw new Error("Invalid runFromPrevYear argument. Only boolean values are accepted.");
+
+			const browser = await puppeteer.launch({ headless: "new" }); // for running in Node.js
+			// const browser = await puppeteer.launch({ executablePath: "./chromium/chrome.exe", headless: false }); // for .exe packages
+			const page = await browser.newPage();
+
+			let startDate; // report start date, normally 1 Jan
+			let reportDate; // normally 1 of the current month
+
+			reportDate = jsDateToInputString(date);
+			const year = date.getFullYear();
+
+			// if required to run from previous year, set start date to 1 Jan previous year, else 1 Jan this year
+			if (runFromPrevYear) startDate = `0101${year - 1}`;
+			else startDate = `0101${year}`;
+
+			// override default timeout of 30000
+			page.setDefaultNavigationTimeout(60000);
+			console.log(`Starting EU MRV data gathering for ${vesselName} for period ${startDate}-${reportDate}...`);
+
+			const navigationPromise = page.waitForNavigation();
+
+			// Go to login page
+			await page.goto(`${this.url}/palweblogin/Home/Login`);
+
+			await page.setViewport({ width: 1920, height: 900 });
+
+			await navigationPromise;
+			console.log(`Opened ${this.url}/palweblogin/Home/Login`);
+
+			// Enter PAL credentials
+			await page.waitForSelector("#UserName");
+			await page.type("#UserName", this.user);
+			await page.type("#Password", this.password);
+			await new Promise((r) => setTimeout(r, 100));
+
+			await navigationPromise;
+
+			await new Promise((r) => setTimeout(r, 200));
+
+			await page.waitForSelector("#btnSubmit");
+			await page.click("#btnSubmit");
+
+			console.log("Logged in");
+
+			// wait 2500ms for Dashboard to load
+			await new Promise((r) => setTimeout(r, 2500));
+
+			// Go to EUMRV page
+			await page.goto(`${this.url}/palvoyage/VoyagePAL/EUMRVLogReport`);
+			console.log(`Opened EUMRV Log Report page`);
+
+			// Select the vessel
+			await page.waitForSelector("#DivPerformanceOverView > #divHeader > table > tbody > tr > .bsm-common-content");
+			await page.click("#DivPerformanceOverView > #divHeader > table > tbody > tr > .bsm-common-content");
+			await page.keyboard.press("Tab");
+			await new Promise((r) => setTimeout(r, 200));
+			await page.keyboard.type(vesselName);
+			await new Promise((r) => setTimeout(r, 1500));
+			await page.keyboard.press("ArrowDown");
+			await new Promise((r) => setTimeout(r, 500));
+			await page.keyboard.press("Enter");
+			await new Promise((r) => setTimeout(r, 300));
+			console.log(`Selected ${vesselName}`);
+
+			// Type From date
+			await page.waitForSelector("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
+			await page.click("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
+			for (let i = 0; i < 6; i++) {
+				await page.keyboard.press("Tab");
+				await new Promise((r) => setTimeout(r, 100));
+			}
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.type(startDate);
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("Enter");
+			await new Promise((r) => setTimeout(r, 100));
+
+			// Type To date
+			await page.keyboard.press("Tab");
+			await page.keyboard.type(reportDate);
+			await new Promise((r) => setTimeout(r, 1));
+			await page.keyboard.press("Enter");
+
+			// Click Show
+			await page.keyboard.press("Tab");
+			await page.keyboard.press("Tab");
+			await page.keyboard.press("Space");
+			console.log(`Selected interval ${startDate}-${reportDate} and clicked Show. Waiting for results...`);
+
+			await new Promise((r) => setTimeout(r, 200));
+
+			// wait for the page to load results
+			await page.waitForSelector("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+			let element = await page.$("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+			let results = await page.evaluate((el) => el.textContent, element);
+
+			// Check every 3 sec. if it still says "No items to display" at the bottom. If not, move on, means the data is loaded
+			while (results == "No items to display") {
+				await new Promise((r) => setTimeout(r, 3000));
+				element = await page.$("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+				results = await page.evaluate((el) => el.textContent, element);
+			}
+			console.log(`Results displayed`);
+
+			// Select 500 items per page
+			await page.waitForSelector("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+			await page.click("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("ArrowDown");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("ArrowDown");
+			await new Promise((r) => setTimeout(r, 100));
+			await page.keyboard.press("Enter");
+			console.log("Selected 500 items per page");
+
+			// Read totals
+			// Read time at anchor
+			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
+			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
+			let hrsAtAnchor = await page.evaluate((el) => el.textContent, element);
+
+			// eliminate the comma from the value and convert it to number
+			hrsAtAnchor = hrsAtAnchor.replace(",", "");
+			hrsAtAnchor = Number(hrsAtAnchor);
+
+			// Iterage through all legs 1 to 500
+			for (let i = 1; i <= 500; i++) {
+				const legElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(2)`);
+				const depPortElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(3)`);
+				const depCountryElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(4)`);
+				const depTimeElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(5)`);
+				const arrPortElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(6)`);
+				const arrCountryElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(7)`);
+				const arrTimeElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(8)`);
+				const seaHFOconsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(9)`);
+				const seaHFOCO2element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(10)`);
+				const seaLFOconsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(11)`);
+				const seaLFOCO2element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(12)`);
+				const seaMDOconsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(13)`);
+				const seaMDOCO2element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(14)`);
+				const seaTotalConsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(15)`);
+				const seaTotalCO2element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(16)`);
+				const portHFOconsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(17)`);
+				const portHFOCO2Element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(18)`);
+				const portLFOconsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(19)`);
+				const portLFOCO2Element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(20)`);
+				const portMDOconsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(21)`);
+				const portMDOCO2Element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(22)`);
+				const portTotalConsElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(23)`);
+				const portTotalCO2element = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(24)`);
+				const distanceElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(25)`);
+				const timeAtSeaElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(26)`);
+				const timeAtAnchorageElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(27)`);
+				const timeDriftingElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(28)`);
+				const timeNavigationElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(29)`);
+				const timeSteamingElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(30)`);
+				const cargoElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(31)`);
+				const transportworkElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(32)`);
+
+				// if leg exists, read the data in the HTML elements
+				if (legElement) {
+					var voyageLeg = await page.evaluate((el) => el.textContent, legElement);
+					var depPort = await page.evaluate((el) => el.textContent, depPortElement);
+					var depCountry = await page.evaluate((el) => el.textContent, depCountryElement);
+					var depTime = await page.evaluate((el) => el.textContent, depTimeElement);
+					var arrPort = await page.evaluate((el) => el.textContent, arrPortElement);
+					var arrCountry = await page.evaluate((el) => el.textContent, arrCountryElement);
+					var arrTime = await page.evaluate((el) => el.textContent, arrTimeElement);
+					var DALL = arrTime;
+					var seaHFOcons = await page.evaluate((el) => el.textContent, seaHFOconsElement);
+					var seaHFOCO2 = await page.evaluate((el) => el.textContent, seaHFOCO2element);
+					var seaLFOcons = await page.evaluate((el) => el.textContent, seaLFOconsElement);
+					var seaHFOCO2 = await page.evaluate((el) => el.textContent, seaLFOCO2element);
+					var seaMDOcons = await page.evaluate((el) => el.textContent, seaMDOconsElement);
+					var seaMDOCO2 = await page.evaluate((el) => el.textContent, seaMDOCO2element);
+					var seaTotalCons = await page.evaluate((el) => el.textContent, seaTotalConsElement);
+					var seaTotalCO2 = await page.evaluate((el) => el.textContent, seaTotalCO2element);
+					var portHFOcons = await page.evaluate((el) => el.textContent, portHFOconsElement);
+					var portHFOCO2 = await page.evaluate((el) => el.textContent, portHFOCO2Element);
+					var portLFOcons = await page.evaluate((el) => el.textContent, portLFOconsElement);
+					var portLFOCO2 = await page.evaluate((el) => el.textContent, portLFOCO2Element);
+					var portMDOcons = await page.evaluate((el) => el.textContent, portMDOconsElement);
+					var portMDOCO2 = await page.evaluate((el) => el.textContent, portMDOCO2Element);
+					var seaTotalCons = await page.evaluate((el) => el.textContent, portTotalConsElement);
+					var seaTotalCO2 = await page.evaluate((el) => el.textContent, portTotalCO2element);
+					var seaTotalCO2 = await page.evaluate((el) => el.textContent, portTotalCO2element);
+					var distance = await page.evaluate((el) => el.textContent, distanceElement);
+					var timeAtSea = await page.evaluate((el) => el.textContent, timeAtSeaElement);
+					var timeAtAnchorage = await page.evaluate((el) => el.textContent, timeAtAnchorageElement);
+					var timeDrifting = await page.evaluate((el) => el.textContent, timeDriftingElement);
+					var timeNavigation = await page.evaluate((el) => el.textContent, timeNavigationElement);
+					var timeSteaming = await page.evaluate((el) => el.textContent, timeSteamingElement);
+					var cargo = await page.evaluate((el) => el.textContent, cargoElement);
+					var transportwork = await page.evaluate((el) => el.textContent, transportworkElement);
+				}
+			}
+
+			// Convert to format DDMMYYYY
+			DALL = toInputDate(DALL);
+			console.log(`Date of Arrival of Last Leg: ${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`);
+
+			// Some DCS legs will finish after 1st of the current month and DALL could be after
+			// In this case, only need to consider DALL until 1 of the month, since DCS data is also only until that date
+			// Checking if DALL is later than 1 of the month and if so, consider it only until the 1st
+			if (stringToDate(DALL) > stringToDate(reportDate)) {
+				DALL = reportDate;
+			}
+
+			// Get the date in format DD-MMM-YYYY for record keeping
+			let excelDALL = `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`; // expect DD.MM.YYYY
+
+			console.timeEnd("EU MRV");
+			await browser.close();
+
+			const response = {
+				vessel: vesselName,
+				startDate: `${startDate.slice(0, -6)}.${startDate.slice(2, -4)}.${startDate.slice(4)}`,
+				endDate: `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`,
+				voyageLeg,
+				depPort,
+				depCountry,
+				depTime,
+				arrPort,
+				arrCountry,
+				arrTime,
+				seaHFOcons,
+				seaHFOCO2,
+				seaLFOcons,
+				seaHFOCO2,
+				seaMDOcons,
+				seaMDOCO2,
+				seaTotalCons,
+				seaTotalCO2,
+				portHFOcons,
+				portHFOCO2,
+				portLFOcons,
+				portLFOCO2,
+				portMDOcons,
+				portMDOCO2,
+				seaTotalCons,
+				seaTotalCO2,
+				seaTotalCO2,
+				distance,
+				timeAtSea,
+				timeAtAnchorage,
+				timeDrifting,
+				timeNavigation,
+				timeSteaming,
+				cargo,
+				transportwork,
+			};
+			resolve(response);
+		});
 	}
 }
 
