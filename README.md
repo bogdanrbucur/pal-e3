@@ -202,6 +202,58 @@ console.log(dcs);
 }
 ```
 
+#### Getting EU MRV legs for given vessel from start of the year of the given date
+
+```js
+// optional third argument true if needed to run from pervious 1 Jan
+let eumrv = await palapi.eumrv("Chem Mia", new Date());
+console.log(eumrv);
+
+// Get the result object
+{
+  vessel: 'CHEM MIA',
+  startDate: '01.01.2023',
+  endDate: '09.01.2023',
+  legs: [
+    {
+      voyageLeg: '274/01, 274/02',
+      depPort: 'Rotterdam',
+      depCountry: 'NETHERLANDS',
+      depTime: '29-Dec-2022 20:24',
+      arrPort: 'Hamburg',
+      arrCountry: 'GERMANY',
+      arrTime: '09-Jan-2023 07:00',
+      seaHFOcons: 0,
+      seaHFOCO2: 0,
+      seaLFOcons: 0,
+      seaLFOCO2: 0,
+      seaMDOcons: 43.36,
+      seaMDOCO2: 139.01,
+      seaTotalCons: 43.36,
+      seaTotalCO2: 139.01,
+      portHFOcons: 0,
+      portHFOCO2: 0,
+      portLFOcons: 0,
+      portLFOCO2: 0,
+      portMDOcons: 8.33,
+      portMDOCO2: 26.71,
+      portTotalCons: 8.33,
+      portTotalCO2: 26.71,
+      distance: 371,
+      timeAtSea: 212,
+      timeAtAnchorage: 181.1,
+      timeDrifting: 0,
+      timeNavigation: 30.9,
+      timeSteaming: 30.9,
+      cargo: 0,
+      transportwork: 0
+    },
+		{...},
+		...
+  ]
+}
+```
+
 #### Getting all drills for a given vessel name
 
 ```js
