@@ -252,8 +252,6 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.5.14
+### Release notes 1.6.0
 
-- added `getPendingList()` method
-- remove useless console log
-- better error handling for user not found
+- added `eumrv()` method and simplified `imodcs()` functionality
