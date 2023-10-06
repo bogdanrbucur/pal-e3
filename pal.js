@@ -1995,8 +1995,8 @@ export default class PALAPI {
 					seaHFOCO2 = Number(seaHFOCO2);
 					var seaLFOcons = await page.evaluate((el) => el.textContent, seaLFOconsElement);
 					seaLFOcons = Number(seaLFOcons);
-					var seaHFOCO2 = await page.evaluate((el) => el.textContent, seaLFOCO2element);
-					seaHFOCO2 = Number(seaHFOCO2);
+					var seaLFOCO2 = await page.evaluate((el) => el.textContent, seaLFOCO2element);
+					seaLFOCO2 = Number(seaLFOCO2);
 					var seaMDOcons = await page.evaluate((el) => el.textContent, seaMDOconsElement);
 					seaMDOcons = Number(seaMDOcons);
 					var seaMDOCO2 = await page.evaluate((el) => el.textContent, seaMDOCO2element);
@@ -2053,7 +2053,7 @@ export default class PALAPI {
 						seaHFOcons,
 						seaHFOCO2,
 						seaLFOcons,
-						seaHFOCO2,
+						seaLFOCO2,
 						seaMDOcons,
 						seaMDOCO2,
 						seaTotalCons,
