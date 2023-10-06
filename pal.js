@@ -1300,7 +1300,8 @@ export default class PALAPI {
 	 * Returns the cumulated IMO DCS voyages consumptions for the given vessel and, optionally, year.
 	 * It will normally run from 1 Jan of current year until given date, unless the year is also specified
 	 * @param {string} vesselName
-	 * @param {number} [year] - YYYY
+	 * @param {Date} date - JavaScript Date object
+	 * @param {boolean} runFromPrevYear - default false. set to true if to run from previous year
 	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
 	 */
 	async imoDcs(vesselName, date, runFromPrevYear = false) {
@@ -1387,28 +1388,18 @@ export default class PALAPI {
 			console.log(`Selected ${vesselName}`);
 
 			// Type From date
-			await page.waitForSelector("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
-			await page.click("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
-			for (let i = 0; i < 6; i++) {
-				await page.keyboard.press("Tab");
-				await new Promise((r) => setTimeout(r, 100));
-			}
-			await new Promise((r) => setTimeout(r, 100));
-			await page.keyboard.type(startDate);
-			await new Promise((r) => setTimeout(r, 100));
-			await page.keyboard.press("Enter");
+			await page.waitForSelector("#dtpFromDatedcs");
+			await page.type("#dtpFromDatedcs", startDate);
 			await new Promise((r) => setTimeout(r, 100));
 
 			// Type To date
-			await page.keyboard.press("Tab");
-			await page.keyboard.type(reportDate);
-			await new Promise((r) => setTimeout(r, 1));
-			await page.keyboard.press("Enter");
+			await page.waitForSelector("#dtpToDatedcs");
+			await page.type("#dtpToDatedcs", reportDate);
+			await new Promise((r) => setTimeout(r, 100));
 
 			// Click Show
-			await page.keyboard.press("Tab");
-			await page.keyboard.press("Tab");
-			await page.keyboard.press("Space");
+			await page.waitForSelector("#btnShow0");
+			await page.click("#btnShow0");
 			console.log(`Selected interval ${startDate}-${reportDate} and clicked Show. Waiting for results...`);
 
 			await new Promise((r) => setTimeout(r, 200));
@@ -1835,7 +1826,8 @@ export default class PALAPI {
 	 * Returns the cumulated EU MRV voyages consumptions for the given vessel and, optionally, year.
 	 * It will normally run from 1 Jan of current year until given date, unless the year is also specified
 	 * @param {string} vesselName
-	 * @param {number} [year] - YYYY
+	 * @param {Date} date - JavaScript Date object
+	 * @param {boolean} runFromPrevYear - default false. set to true if to run from previous year
 	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
 	 */
 	async eumrv(vesselName, date, runFromPrevYear = false) {
@@ -1910,48 +1902,39 @@ export default class PALAPI {
 			console.log(`Selected ${vesselName}`);
 
 			// Type From date
-			await page.waitForSelector("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
-			await page.click("#divHeader0 > table > tbody > tr > .bsm-common-content:nth-child(1)");
-			for (let i = 0; i < 6; i++) {
-				await page.keyboard.press("Tab");
-				await new Promise((r) => setTimeout(r, 100));
-			}
-			await new Promise((r) => setTimeout(r, 100));
-			await page.keyboard.type(startDate);
-			await new Promise((r) => setTimeout(r, 100));
-			await page.keyboard.press("Enter");
+			await page.waitForSelector("#dtpFromDate");
+			await page.type("#dtpFromDate", startDate);
 			await new Promise((r) => setTimeout(r, 100));
 
 			// Type To date
-			await page.keyboard.press("Tab");
-			await page.keyboard.type(reportDate);
-			await new Promise((r) => setTimeout(r, 1));
-			await page.keyboard.press("Enter");
+			await page.waitForSelector("#dtpToDate");
+			await page.type("#dtpToDate", reportDate);
+			await new Promise((r) => setTimeout(r, 100));
 
 			// Click Show
-			await page.keyboard.press("Tab");
-			await page.keyboard.press("Tab");
-			await page.keyboard.press("Space");
+			await page.waitForSelector("#btnShow");
+			await page.click("#btnShow");
+
 			console.log(`Selected interval ${startDate}-${reportDate} and clicked Show. Waiting for results...`);
 
 			await new Promise((r) => setTimeout(r, 200));
 
 			// wait for the page to load results
-			await page.waitForSelector("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
-			let element = await page.$("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+			await page.waitForSelector("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-info.k-label");
+			let element = await page.$("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-info.k-label");
 			let results = await page.evaluate((el) => el.textContent, element);
 
 			// Check every 3 sec. if it still says "No items to display" at the bottom. If not, move on, means the data is loaded
 			while (results == "No items to display") {
 				await new Promise((r) => setTimeout(r, 3000));
-				element = await page.$("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+				element = await page.$("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-info.k-label");
 				results = await page.evaluate((el) => el.textContent, element);
 			}
 			console.log(`Results displayed`);
 
 			// Select 500 items per page
-			await page.waitForSelector("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
-			await page.click("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+			await page.waitForSelector("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+			await page.click("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
 			await new Promise((r) => setTimeout(r, 100));
 			await page.keyboard.press("ArrowDown");
 			await new Promise((r) => setTimeout(r, 100));
@@ -1960,16 +1943,7 @@ export default class PALAPI {
 			await page.keyboard.press("Enter");
 			console.log("Selected 500 items per page");
 
-			// Read totals
-			// Read time at anchor
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
-			let hrsAtAnchor = await page.evaluate((el) => el.textContent, element);
-
-			// eliminate the comma from the value and convert it to number
-			hrsAtAnchor = hrsAtAnchor.replace(",", "");
-			hrsAtAnchor = Number(hrsAtAnchor);
-
+			let legs = [];
 			// Iterage through all legs 1 to 500
 			for (let i = 1; i <= 500; i++) {
 				const legElement = await page.$(`#grdResult > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(2)`);
@@ -2015,30 +1989,91 @@ export default class PALAPI {
 					var arrTime = await page.evaluate((el) => el.textContent, arrTimeElement);
 					var DALL = arrTime;
 					var seaHFOcons = await page.evaluate((el) => el.textContent, seaHFOconsElement);
+					seaHFOcons = Number(seaHFOcons);
 					var seaHFOCO2 = await page.evaluate((el) => el.textContent, seaHFOCO2element);
+					seaHFOCO2 = Number(seaHFOCO2);
 					var seaLFOcons = await page.evaluate((el) => el.textContent, seaLFOconsElement);
+					seaLFOcons = Number(seaLFOcons);
 					var seaHFOCO2 = await page.evaluate((el) => el.textContent, seaLFOCO2element);
+					seaHFOCO2 = Number(seaHFOCO2);
 					var seaMDOcons = await page.evaluate((el) => el.textContent, seaMDOconsElement);
+					seaMDOcons = Number(seaMDOcons);
 					var seaMDOCO2 = await page.evaluate((el) => el.textContent, seaMDOCO2element);
+					seaMDOCO2 = Number(seaMDOCO2);
 					var seaTotalCons = await page.evaluate((el) => el.textContent, seaTotalConsElement);
+					seaTotalCons = Number(seaTotalCons);
 					var seaTotalCO2 = await page.evaluate((el) => el.textContent, seaTotalCO2element);
+					seaTotalCO2 = Number(seaTotalCO2);
 					var portHFOcons = await page.evaluate((el) => el.textContent, portHFOconsElement);
+					portHFOcons = Number(portHFOcons);
 					var portHFOCO2 = await page.evaluate((el) => el.textContent, portHFOCO2Element);
+					portHFOCO2 = Number(portHFOCO2);
 					var portLFOcons = await page.evaluate((el) => el.textContent, portLFOconsElement);
+					portLFOcons = Number(portLFOcons);
 					var portLFOCO2 = await page.evaluate((el) => el.textContent, portLFOCO2Element);
+					portLFOCO2 = Number(portLFOCO2);
 					var portMDOcons = await page.evaluate((el) => el.textContent, portMDOconsElement);
+					portMDOcons = Number(portMDOcons);
 					var portMDOCO2 = await page.evaluate((el) => el.textContent, portMDOCO2Element);
-					var seaTotalCons = await page.evaluate((el) => el.textContent, portTotalConsElement);
-					var seaTotalCO2 = await page.evaluate((el) => el.textContent, portTotalCO2element);
-					var seaTotalCO2 = await page.evaluate((el) => el.textContent, portTotalCO2element);
+					portMDOCO2 = Number(portMDOCO2);
+					var portTotalCons = await page.evaluate((el) => el.textContent, portTotalConsElement);
+					portTotalCons = Number(portTotalCons);
+					var portTotalCO2 = await page.evaluate((el) => el.textContent, portTotalCO2element);
+					portTotalCO2 = Number(portTotalCO2);
 					var distance = await page.evaluate((el) => el.textContent, distanceElement);
+					distance = distance.replaceAll(",", "");
+					distance = Number(distance);
 					var timeAtSea = await page.evaluate((el) => el.textContent, timeAtSeaElement);
+					timeAtSea = Number(timeAtSea);
 					var timeAtAnchorage = await page.evaluate((el) => el.textContent, timeAtAnchorageElement);
+					timeAtAnchorage = Number(timeAtAnchorage);
 					var timeDrifting = await page.evaluate((el) => el.textContent, timeDriftingElement);
+					timeDrifting = Number(timeDrifting);
 					var timeNavigation = await page.evaluate((el) => el.textContent, timeNavigationElement);
+					timeNavigation = Number(timeNavigation);
 					var timeSteaming = await page.evaluate((el) => el.textContent, timeSteamingElement);
+					timeSteaming = Number(timeSteaming);
 					var cargo = await page.evaluate((el) => el.textContent, cargoElement);
+					cargo = cargo.replace(",", "");
+					cargo = Number(cargo);
 					var transportwork = await page.evaluate((el) => el.textContent, transportworkElement);
+					transportwork = transportwork.replaceAll(",", "");
+					transportwork = Number(transportwork);
+
+					// push the leg to legs array
+					legs.push({
+						voyageLeg,
+						depPort,
+						depCountry,
+						depTime,
+						arrPort,
+						arrCountry,
+						arrTime,
+						seaHFOcons,
+						seaHFOCO2,
+						seaLFOcons,
+						seaHFOCO2,
+						seaMDOcons,
+						seaMDOCO2,
+						seaTotalCons,
+						seaTotalCO2,
+						portHFOcons,
+						portHFOCO2,
+						portLFOcons,
+						portLFOCO2,
+						portMDOcons,
+						portMDOCO2,
+						portTotalCons,
+						portTotalCO2,
+						distance,
+						timeAtSea,
+						timeAtAnchorage,
+						timeDrifting,
+						timeNavigation,
+						timeSteaming,
+						cargo,
+						transportwork,
+					});
 				}
 			}
 
@@ -2063,38 +2098,7 @@ export default class PALAPI {
 				vessel: vesselName,
 				startDate: `${startDate.slice(0, -6)}.${startDate.slice(2, -4)}.${startDate.slice(4)}`,
 				endDate: `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`,
-				voyageLeg,
-				depPort,
-				depCountry,
-				depTime,
-				arrPort,
-				arrCountry,
-				arrTime,
-				seaHFOcons,
-				seaHFOCO2,
-				seaLFOcons,
-				seaHFOCO2,
-				seaMDOcons,
-				seaMDOCO2,
-				seaTotalCons,
-				seaTotalCO2,
-				portHFOcons,
-				portHFOCO2,
-				portLFOcons,
-				portLFOCO2,
-				portMDOcons,
-				portMDOCO2,
-				seaTotalCons,
-				seaTotalCO2,
-				seaTotalCO2,
-				distance,
-				timeAtSea,
-				timeAtAnchorage,
-				timeDrifting,
-				timeNavigation,
-				timeSteaming,
-				cargo,
-				transportwork,
+				legs,
 			};
 			resolve(response);
 		});
