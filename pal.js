@@ -1987,6 +1987,7 @@ export default class PALAPI {
 					var arrPort = await page.evaluate((el) => el.textContent, arrPortElement);
 					var arrCountry = await page.evaluate((el) => el.textContent, arrCountryElement);
 					var arrTime = await page.evaluate((el) => el.textContent, arrTimeElement);
+					// DALL will keep arrival date of last leg
 					var DALL = arrTime;
 					var seaHFOcons = await page.evaluate((el) => el.textContent, seaHFOconsElement);
 					seaHFOcons = Number(seaHFOcons);
@@ -2077,19 +2078,8 @@ export default class PALAPI {
 				}
 			}
 
-			// Convert to format DDMMYYYY
+			// convert to DDMMYYYY
 			DALL = toInputDate(DALL);
-			console.log(`Date of Arrival of Last Leg: ${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`);
-
-			// Some DCS legs will finish after 1st of the current month and DALL could be after
-			// In this case, only need to consider DALL until 1 of the month, since DCS data is also only until that date
-			// Checking if DALL is later than 1 of the month and if so, consider it only until the 1st
-			if (stringToDate(DALL) > stringToDate(reportDate)) {
-				DALL = reportDate;
-			}
-
-			// Get the date in format DD-MMM-YYYY for record keeping
-			let excelDALL = `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`; // expect DD.MM.YYYY
 
 			console.timeEnd("EU MRV");
 			await browser.close();
