@@ -45,7 +45,7 @@ Wrap all the API calls in an `async` function to be able to use `await`. Before 
 
 ```js
 const main = async () => {
-	await palapi.getCookie();
+ await palapi.getCookie();
 };
 
 main();
@@ -72,10 +72,10 @@ const myVessels = ["CHEM MIA", "CHEM POLARIS", "CHEM VENUS"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
 const main = async () => {
-	await palapi.getCookie();
+ await palapi.getCookie();
 
-	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
-	console.log(requsitions);
+ let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+ console.log(requsitions);
 };
 
 main();
@@ -94,10 +94,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-	await palapi.getCookie();
+ await palapi.getCookie();
 
-	let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
-	console.log(allocation); // true if succesful
+ let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
+ console.log(allocation); // true if succesful
 };
 
 main();
@@ -116,10 +116,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-	await palapi.getCookie();
+ await palapi.getCookie();
 
-	let jobAllocation = await palapi.purchaseAllocation("JOB", "Chem Polaris", "BREAKDOWN", "insurance manager", "", "BREAKDOWN - Normal");
-	console.log(jobAllocation); // true if succesful
+ let jobAllocation = await palapi.purchaseAllocation("JOB", "Chem Polaris", "BREAKDOWN", "insurance manager", "", "BREAKDOWN - Normal");
+ console.log(jobAllocation); // true if succesful
 };
 
 main();
@@ -138,10 +138,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-	await palapi.getCookie();
+ await palapi.getCookie();
 
-	let voyAlloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
-	console.log(voyAlloc); // true if succesful
+ let voyAlloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
+ console.log(voyAlloc); // true if succesful
 };
 
 main();
@@ -162,10 +162,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
-	await palapi.getCookie();
+ await palapi.getCookie();
 
-	let crewAlloc = await palapi.crewAllocation("Chem mia", "incidential  expense", "crew - crew manager", ["bogdan", "adrian"]);
-	console.log(crewAlloc); // true if succesful or if user already there in the same role
+ let crewAlloc = await palapi.crewAllocation("Chem mia", "incidential  expense", "crew - crew manager", ["bogdan", "adrian"]);
+ console.log(crewAlloc); // true if succesful or if user already there in the same role
 };
 
 main();
@@ -248,8 +248,8 @@ console.log(eumrv);
       cargo: 0,
       transportwork: 0
     },
-		{...},
-		...
+  {...},
+  ...
   ]
 }
 ```
@@ -272,6 +272,25 @@ console.log(drills);
 
 ```
 
+#### Getting all documents in a given QDMS folder by the folder ID
+
+```js
+const docs = await palapi.getQDMSdocsByFolderId(6148);
+console.log(docs);
+
+// Get the result object
+{
+ CreatedBy: "Marine Assistant";
+ CreatedOn: "31-Oct-2023 06:51:46";
+ DocFolder: "Karlshamn";
+ DocNo: "PI-KAR-02";
+ DocSite: "All";
+ Doctitle: "CDC - Sweden";
+ ID: 99990000505971;
+ Revision: 3;
+}
+```
+
 #### Getting upcoming crew changes for the next 10 days CPT and C/E ranks
 
 ```js
@@ -281,18 +300,18 @@ console.log(crewChange);
 
 // Get the  objects array
 [
-	{
-		vessel: "Chem Mia",
-		rank: "C/E",
-		offName: "JOHN DOE",
-		offDueDate: "09-Aug-2023",
-		plannedRelief: "24-Aug-2023",
-		onName: "JANE DOE",
-		port: "Buenaventura",
-		remarks: "Briefing in office / process Schengen visa",
-		onCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
-		offCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
-	},
+ {
+  vessel: "Chem Mia",
+  rank: "C/E",
+  offName: "JOHN DOE",
+  offDueDate: "09-Aug-2023",
+  plannedRelief: "24-Aug-2023",
+  onName: "JANE DOE",
+  port: "Buenaventura",
+  remarks: "Briefing in office / process Schengen visa",
+  onCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
+  offCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
+ },
 ];
 ```
 
@@ -304,6 +323,6 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.6.0
+### Release notes 1.6.5
 
-- added `eumrv()` method and simplified `imodcs()` functionality
+- added `getQDMSdocsByFolderId()` method

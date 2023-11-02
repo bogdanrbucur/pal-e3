@@ -1828,7 +1828,7 @@ export default class PALAPI {
 	 * @param {string} vesselName
 	 * @param {Date} date - JavaScript Date object
 	 * @param {boolean} runFromPrevYear - default false. set to true if to run from previous year
-	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
+	 * @return {Promise<{vessel: string, startDate: string, endDate: string, legs: Object[]}>} Object with results
 	 */
 	async eumrv(vesselName, date, runFromPrevYear = false) {
 		console.time("EU MRV");
@@ -2125,6 +2125,84 @@ export default class PALAPI {
 				resolve(response);
 			}
 		});
+	}
+
+	async #getQDMSfolderDocsPerPage(folderId, page, pageSize) {
+		// 6148 = Ports Information folder
+
+		console.log(`Fetching QDMS documents in folder ID ${folderId} page ${page} of ${pageSize} records each`);
+
+		// build the Form body
+		let bodyFormData = new URLSearchParams();
+		bodyFormData.append("sort", "");
+		bodyFormData.append("page", page);
+		bodyFormData.append("pageSize", pageSize);
+		bodyFormData.append("group", "");
+		bodyFormData.append("SelectedID", folderId);
+		bodyFormData.append("Dateoption", "ALL");
+		bodyFormData.append("FromDate", "01-Oct-2018");
+		bodyFormData.append("Todate", "02-Nov-2025");
+		bodyFormData.append("Allword", "");
+		bodyFormData.append("phrase", "");
+		bodyFormData.append("anyword", "");
+		bodyFormData.append("noneWords", "");
+		bodyFormData.append("Selectedfolder", "false");
+		bodyFormData.append("VesselObjectID", "-1");
+		bodyFormData.append("VesselTypeID", "-1");
+		bodyFormData.append("Flag_ID", "-1");
+		bodyFormData.append("ClassTypeID", "-1");
+		bodyFormData.append("Applicable_To", "-1");
+		bodyFormData.append("isMyVSl", "N");
+		bodyFormData.append("companyList", "");
+		bodyFormData.append("vesselList", "");
+		bodyFormData.append("libraryID", "");
+
+		const response = await fetch(`${this.url}/palqdms/QDMS/DocumentLibrary/DocumentList_Read`, {
+			method: "POST",
+			headers: { Cookie: `.BSMAuthCookie=${this.#cookie}` },
+			body: bodyFormData,
+		});
+
+		const body = await response.json();
+		if (body.Errors) throw new Error(body.Errors);
+
+		return body;
+	}
+
+	/**
+	 * Get all the documents in a given QDMS folder, by its internal folder ID
+	 * @param {number} folderId
+	 * @return {Promise<QDMSdoc[]>} Array of QDMS documents objects
+	 */
+	async getQDMSdocsByFolderId(folderId) {
+		let page = 1;
+		const pageSize = 200;
+
+		const response = await this.#getQDMSfolderDocsPerPage(folderId, page, pageSize);
+		const noOfRecords = response.Total;
+
+		// get all the documents, on all pages, until all are received
+		let allRecords = response.Data;
+		while (noOfRecords > page * pageSize) {
+			page++;
+			const newPage = await this.#getQDMSfolderDocsPerPage(folderId, page, pageSize);
+			newPage.Data.forEach((r) => {
+				allRecords.push(r);
+			});
+		}
+		console.log(`Returned ${allRecords.length} documents`);
+		return allRecords;
+
+		// {
+		// 	CreatedBy: "Marine Assistant";
+		// 	CreatedOn: "31-Oct-2023 06:51:46";
+		// 	DocFolder: "Karlshamn";
+		// 	DocNo: "PI-KAR-02";
+		// 	DocSite: "All";
+		// 	Doctitle: "CDC - Sweden";
+		// 	ID: 99990000505971;
+		// 	Revision: 3;
+		// }
 	}
 }
 
