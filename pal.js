@@ -1410,11 +1410,22 @@ export default class PALAPI {
 			let results = await page.evaluate((el) => el.textContent, element);
 
 			// Check every 3 sec. if it still says "No items to display" at the bottom. If not, move on, means the data is loaded
-			while (results == "No items to display") {
+			//
+			let t = 0;
+			const timeout = 40; // 3000 ms * 40 = 120 sec. waiting for something to display
+			while (results == "No items to display" && t < timeout) {
 				await new Promise((r) => setTimeout(r, 3000));
-				element = await page.$("#divMainResultIMO > div > #grdResultIMO > .k-pager-wrap > .k-pager-info");
+				element = await page.$("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-info.k-label");
 				results = await page.evaluate((el) => el.textContent, element);
+				t++;
 			}
+
+			if (t >= timeout) {
+				console.log("No results shown");
+				console.timeEnd("IMO DCS");
+				await browser.close();
+				resolve(null);
+			} else {
 			console.log(`Results displayed`);
 
 			// Select 500 items per page
@@ -1595,7 +1606,7 @@ export default class PALAPI {
 				hrsInPort,
 			};
 			resolve(response);
-		});
+		}});
 	}
 
 	/**
