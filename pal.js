@@ -1415,7 +1415,7 @@ export default class PALAPI {
 			const timeout = 40; // 3000 ms * 40 = 120 sec. waiting for something to display
 			while (results == "No items to display" && t < timeout) {
 				await new Promise((r) => setTimeout(r, 3000));
-				element = await page.$("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-info.k-label");
+				element = await page.$("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-info.k-label");
 				results = await page.evaluate((el) => el.textContent, element);
 				t++;
 			}
