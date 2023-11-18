@@ -1,6 +1,6 @@
 {
 	"name": "pal-e3",
-	"version": "1.6.10",
+	"version": "1.6.11",
 	"description": "Interact with MariApps PAL e3 ERP via REST API.",
 	"main": "pal.js",
 	"type": "module",

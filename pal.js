@@ -92,14 +92,21 @@ export default class PALAPI {
 
 	/**
 	 * Gets all the vessels' port call schedule for the next month
+	 * @param {days} days how many days ahead to check
 	 * @return {Promise<Array>} Array of objects, each containing a port call
 	 */
-	async getVesselSchedule() {
+	async getVesselSchedule(days) {
 		console.log("Start POST request for vessels' schedule...");
 		console.time("Vessels' schedule POST request");
 		// get today's date and 1 month from now
 		let startDate = new Date();
-		let untilDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
+		// if days is provided, use it, otherwise default to 1 month
+		let untilDate;
+		if (days) {
+			untilDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + days);
+		} else {
+			untilDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
+		}
 
 		let options = {
 			method: "POST",
@@ -604,7 +611,17 @@ export default class PALAPI {
 		// if any error exists, return false
 		if (response.data.Errors !== null) return false;
 		// read the current allocation and check if it matches the input
-		let isSuccesful = await this.#isPRCallocSuccessful(docType, ApprovalCycleTemplateId, ApprovalTemplateId, roleCode, usersIds, VesselAllocationId, vslIds, vslObjectIds, catId);
+		let isSuccesful = await this.#isPRCallocSuccessful(
+			docType,
+			ApprovalCycleTemplateId,
+			ApprovalTemplateId,
+			roleCode,
+			usersIds,
+			VesselAllocationId,
+			vslIds,
+			vslObjectIds,
+			catId
+		);
 		return isSuccesful;
 	}
 
@@ -1426,187 +1443,188 @@ export default class PALAPI {
 				await browser.close();
 				resolve(null);
 			} else {
-			console.log(`Results displayed`);
+				console.log(`Results displayed`);
 
-			// Select 500 items per page
-			await page.waitForSelector("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
-			await page.click("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
-			await new Promise((r) => setTimeout(r, 100));
-			await page.keyboard.press("ArrowDown");
-			await new Promise((r) => setTimeout(r, 100));
-			await page.keyboard.press("ArrowDown");
-			await new Promise((r) => setTimeout(r, 100));
-			await page.keyboard.press("Enter");
-			console.log("Selected 500 items per page");
+				// Select 500 items per page
+				await page.waitForSelector("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+				await page.click("#grdResultIMO > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-sizes.k-label > span > span > span.k-select");
+				await new Promise((r) => setTimeout(r, 100));
+				await page.keyboard.press("ArrowDown");
+				await new Promise((r) => setTimeout(r, 100));
+				await page.keyboard.press("ArrowDown");
+				await new Promise((r) => setTimeout(r, 100));
+				await page.keyboard.press("Enter");
+				console.log("Selected 500 items per page");
 
-			// Read consumption values
-			// Sea HFO
-			await new Promise((r) => setTimeout(r, 300));
-			await page.waitForSelector(".k-footer-template > td:nth-child(8) > div > strong > span"); // this is where total HFO is
-			element = await page.$(".k-footer-template > td:nth-child(8) > div > strong > span");
-			// get the value
-			let seaHFO = await page.evaluate((el) => el.textContent, element);
-			// eliminate the comma from the value and convert it to number
-			seaHFO = seaHFO.replace(",", "");
-			seaHFO = Number(seaHFO);
+				// Read consumption values
+				// Sea HFO
+				await new Promise((r) => setTimeout(r, 300));
+				await page.waitForSelector(".k-footer-template > td:nth-child(8) > div > strong > span"); // this is where total HFO is
+				element = await page.$(".k-footer-template > td:nth-child(8) > div > strong > span");
+				// get the value
+				let seaHFO = await page.evaluate((el) => el.textContent, element);
+				// eliminate the comma from the value and convert it to number
+				seaHFO = seaHFO.replace(",", "");
+				seaHFO = Number(seaHFO);
 
-			// Sea LFO
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(9) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(9) > div > strong > span");
-			// get the value
-			let seaLFO = await page.evaluate((el) => el.textContent, element);
-			// eliminate the comma from the value and convert it to number
-			seaLFO = seaLFO.replace(",", "");
-			seaLFO = Number(seaLFO);
+				// Sea LFO
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(9) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(9) > div > strong > span");
+				// get the value
+				let seaLFO = await page.evaluate((el) => el.textContent, element);
+				// eliminate the comma from the value and convert it to number
+				seaLFO = seaLFO.replace(",", "");
+				seaLFO = Number(seaLFO);
 
-			// Sea MDO
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(10) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(10) > div > strong > span");
-			// get the value
-			let seaMDO = await page.evaluate((el) => el.textContent, element);
-			// eliminate the comma from the value and convert it to number
-			seaMDO = seaMDO.replace(",", "");
-			seaMDO = Number(seaMDO);
+				// Sea MDO
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(10) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(10) > div > strong > span");
+				// get the value
+				let seaMDO = await page.evaluate((el) => el.textContent, element);
+				// eliminate the comma from the value and convert it to number
+				seaMDO = seaMDO.replace(",", "");
+				seaMDO = Number(seaMDO);
 
-			// Port HFO
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(12) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(12) > div > strong > span");
-			// get the value
-			let portHFO = await page.evaluate((el) => el.textContent, element);
-			// eliminate the comma from the value and convert it to number
-			portHFO = portHFO.replace(",", "");
-			portHFO = Number(portHFO);
+				// Port HFO
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(12) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(12) > div > strong > span");
+				// get the value
+				let portHFO = await page.evaluate((el) => el.textContent, element);
+				// eliminate the comma from the value and convert it to number
+				portHFO = portHFO.replace(",", "");
+				portHFO = Number(portHFO);
 
-			// Port LFO
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(13) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(13) > div > strong > span");
-			// get the value
-			let portLFO = await page.evaluate((el) => el.textContent, element);
-			// eliminate the comma from the value and convert it to number
-			portLFO = portLFO.replace(",", "");
-			portLFO = Number(portLFO);
+				// Port LFO
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(13) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(13) > div > strong > span");
+				// get the value
+				let portLFO = await page.evaluate((el) => el.textContent, element);
+				// eliminate the comma from the value and convert it to number
+				portLFO = portLFO.replace(",", "");
+				portLFO = Number(portLFO);
 
-			// Port MDO
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(14) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(14) > div > strong > span");
-			// get the value
-			let portMDO = await page.evaluate((el) => el.textContent, element);
-			// eliminate the comma from the value and convert it to number
-			portMDO = portMDO.replace(",", "");
-			portMDO = Number(portMDO);
+				// Port MDO
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(14) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(14) > div > strong > span");
+				// get the value
+				let portMDO = await page.evaluate((el) => el.textContent, element);
+				// eliminate the comma from the value and convert it to number
+				portMDO = portMDO.replace(",", "");
+				portMDO = Number(portMDO);
 
-			// Total HFO
-			let totalHFO = seaHFO + portHFO;
+				// Total HFO
+				let totalHFO = seaHFO + portHFO;
 
-			// Total LFO
-			let totalLFO = seaLFO + portLFO;
+				// Total LFO
+				let totalLFO = seaLFO + portLFO;
 
-			// Total MDO
-			let totalMDO = seaMDO + portMDO;
+				// Total MDO
+				let totalMDO = seaMDO + portMDO;
 
-			// Read sailed distance
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(16) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(16) > div > strong > span");
-			let distance = await page.evaluate((el) => el.textContent, element);
+				// Read sailed distance
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(16) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(16) > div > strong > span");
+				let distance = await page.evaluate((el) => el.textContent, element);
 
-			// eliminate the comma from the value and convert it to number
-			distance = distance.replace(",", "");
-			distance = Number(distance);
+				// eliminate the comma from the value and convert it to number
+				distance = distance.replace(",", "");
+				distance = Number(distance);
 
-			// Read time at sea
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(17) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(17) > div > strong > span");
-			let hrsAtSea = await page.evaluate((el) => el.textContent, element);
+				// Read time at sea
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(17) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(17) > div > strong > span");
+				let hrsAtSea = await page.evaluate((el) => el.textContent, element);
 
-			// eliminate the comma from the value and convert it to number
-			hrsAtSea = hrsAtSea.replace(",", "");
-			hrsAtSea = Number(hrsAtSea);
+				// eliminate the comma from the value and convert it to number
+				hrsAtSea = hrsAtSea.replace(",", "");
+				hrsAtSea = Number(hrsAtSea);
 
-			// Read time at anchor
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
-			let hrsAtAnchor = await page.evaluate((el) => el.textContent, element);
+				// Read time at anchor
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(18) > div > strong > span");
+				let hrsAtAnchor = await page.evaluate((el) => el.textContent, element);
 
-			// eliminate the comma from the value and convert it to number
-			hrsAtAnchor = hrsAtAnchor.replace(",", "");
-			hrsAtAnchor = Number(hrsAtAnchor);
+				// eliminate the comma from the value and convert it to number
+				hrsAtAnchor = hrsAtAnchor.replace(",", "");
+				hrsAtAnchor = Number(hrsAtAnchor);
 
-			// Read time adrift
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(19) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(19) > div > strong > span");
-			let hrsDrifting = await page.evaluate((el) => el.textContent, element);
+				// Read time adrift
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(19) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(19) > div > strong > span");
+				let hrsDrifting = await page.evaluate((el) => el.textContent, element);
 
-			// eliminate the comma from the value and convert it to number
-			hrsDrifting = hrsDrifting.replace(",", "");
-			hrsDrifting = Number(hrsDrifting);
+				// eliminate the comma from the value and convert it to number
+				hrsDrifting = hrsDrifting.replace(",", "");
+				hrsDrifting = Number(hrsDrifting);
 
-			// Read time adrift
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(20) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(20) > div > strong > span");
-			let hrsSteaming = await page.evaluate((el) => el.textContent, element);
+				// Read time adrift
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(20) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(20) > div > strong > span");
+				let hrsSteaming = await page.evaluate((el) => el.textContent, element);
 
-			// eliminate the comma from the value and convert it to number
-			hrsSteaming = hrsSteaming.replace(",", "");
-			hrsSteaming = Number(hrsSteaming);
+				// eliminate the comma from the value and convert it to number
+				hrsSteaming = hrsSteaming.replace(",", "");
+				hrsSteaming = Number(hrsSteaming);
 
-			// Read time adrift
-			await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(21) > div > strong > span");
-			element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(21) > div > strong > span");
-			let hrsInPort = await page.evaluate((el) => el.textContent, element);
+				// Read time adrift
+				await page.waitForSelector("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(21) > div > strong > span");
+				element = await page.$("#grdResultIMO > .k-grid-footer > .k-grid-footer-wrap > table > tbody > .k-footer-template > td:nth-child(21) > div > strong > span");
+				let hrsInPort = await page.evaluate((el) => el.textContent, element);
 
-			// eliminate the comma from the value and convert it to number
-			hrsInPort = hrsInPort.replace(",", "");
-			hrsInPort = Number(hrsInPort);
+				// eliminate the comma from the value and convert it to number
+				hrsInPort = hrsInPort.replace(",", "");
+				hrsInPort = Number(hrsInPort);
 
-			// Read Date of Arrival of Last Leg (DALL)
-			// Go through all legs 1 to 500 and if they exist, get the date of arrival of each leg and keep the last one, since that will be the latest
-			let DALL;
-			for (let i = 1; i < 500; i++) {
-				element = await page.$(`#grdResultIMO > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(7)`);
-				if (element) {
-					DALL = await page.evaluate((el) => el.textContent, element); // expect DD-MMM-YYYY HH:mm
+				// Read Date of Arrival of Last Leg (DALL)
+				// Go through all legs 1 to 500 and if they exist, get the date of arrival of each leg and keep the last one, since that will be the latest
+				let DALL;
+				for (let i = 1; i < 500; i++) {
+					element = await page.$(`#grdResultIMO > div.k-grid-content > table > tbody > tr:nth-child(${i}) > td:nth-child(7)`);
+					if (element) {
+						DALL = await page.evaluate((el) => el.textContent, element); // expect DD-MMM-YYYY HH:mm
+					}
 				}
+
+				// Convert to format DDMMYYYY
+				DALL = toInputDate(DALL);
+				console.log(`Date of Arrival of Last Leg: ${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`);
+
+				// Some DCS legs will finish after 1st of the current month and DALL could be after
+				// In this case, only need to consider DALL until 1 of the month, since DCS data is also only until that date
+				// Checking if DALL is later than 1 of the month and if so, consider it only until the 1st
+				if (stringToDate(DALL) > stringToDate(reportDate)) {
+					DALL = reportDate;
+				}
+
+				// Get the date in format DD-MMM-YYYY for record keeping
+				let excelDALL = `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`; // expect DD.MM.YYYY
+
+				console.timeEnd("IMO DCS");
+				await browser.close();
+
+				const response = {
+					vessel: vesselName,
+					startDate: `${startDate.slice(0, -6)}.${startDate.slice(2, -4)}.${startDate.slice(4)}`,
+					endDate: `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`,
+					distance,
+					seaHFO,
+					seaLFO,
+					seaMDO,
+					portHFO,
+					portLFO,
+					portMDO,
+					totalHFO,
+					totalLFO,
+					totalMDO,
+					hrsAtSea,
+					hrsAtAnchor,
+					hrsDrifting,
+					hrsSteaming,
+					hrsInPort,
+				};
+				resolve(response);
 			}
-
-			// Convert to format DDMMYYYY
-			DALL = toInputDate(DALL);
-			console.log(`Date of Arrival of Last Leg: ${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`);
-
-			// Some DCS legs will finish after 1st of the current month and DALL could be after
-			// In this case, only need to consider DALL until 1 of the month, since DCS data is also only until that date
-			// Checking if DALL is later than 1 of the month and if so, consider it only until the 1st
-			if (stringToDate(DALL) > stringToDate(reportDate)) {
-				DALL = reportDate;
-			}
-
-			// Get the date in format DD-MMM-YYYY for record keeping
-			let excelDALL = `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`; // expect DD.MM.YYYY
-
-			console.timeEnd("IMO DCS");
-			await browser.close();
-
-			const response = {
-				vessel: vesselName,
-				startDate: `${startDate.slice(0, -6)}.${startDate.slice(2, -4)}.${startDate.slice(4)}`,
-				endDate: `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`,
-				distance,
-				seaHFO,
-				seaLFO,
-				seaMDO,
-				portHFO,
-				portLFO,
-				portMDO,
-				totalHFO,
-				totalLFO,
-				totalMDO,
-				hrsAtSea,
-				hrsAtAnchor,
-				hrsDrifting,
-				hrsSteaming,
-				hrsInPort,
-			};
-			resolve(response);
-		}});
+		});
 	}
 
 	/**
