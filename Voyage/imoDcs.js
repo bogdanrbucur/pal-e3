@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { jsDateToInputString, toInputDate, stringToDate } from "../Common/utils.js";
+import { jsDateToInputString, stringToDate, toInputDate } from "../Common/utils.js";
 
 /**
  * Returns the cumulated IMO DCS voyages consumptions for the given vessel and, optionally, year.
