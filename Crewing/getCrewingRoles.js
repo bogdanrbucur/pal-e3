@@ -3,7 +3,7 @@ import FormData from "form-data";
 
 /**
  * Gets all the roles in Crewing
- * @return {Promise<{Id: number,Code: string,Name: 'string,RoleLevel: number,Active: boolean,Is_Active: boolean,}[]>} Array of objects, each containing a role
+ * @return {Promise<{Id: number,Code: string,Name: string,RoleLevel: number,Active: boolean,Is_Active: boolean}[]>} Array of objects, each containing a role
  */
 export default async function getCrewingRoles() {
 	console.log("Start request for Crewing roles...");

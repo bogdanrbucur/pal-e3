@@ -305,7 +305,7 @@ export default class PALAPI {
 
 	/**
 	 * Gets all the roles in Crewing
-	 * @return {Promise<{Id: number,Code: string,Name: 'string,RoleLevel: number,Active: boolean,Is_Active: boolean,}[]>} Array of objects, each containing a role
+	 * @return {Promise<{Id: number,Code: string,Name: string,RoleLevel: number,Active: boolean,Is_Active: boolean}[]>} Array of objects, each containing a role
 	 */
 	async getCrewingRoles() {
 		return getCrewingRoles.call(this);
@@ -317,7 +317,7 @@ export default class PALAPI {
 	 * @param {string} vesselName
 	 * @param {Date} date - JavaScript Date object
 	 * @param {boolean} runFromPrevYear - default false. set to true if to run from previous year
-	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}>} Object with results:
+	 * @return {Promise<{vessel: string, startDate: string, endDate: string, distance: number, totalHFO: number, totalLFO: number, totalMDO: number}[]>} Object with results:
 	 */
 	async imoDcs(vesselName, date, runFromPrevYear = false) {
 		console.time("IMO DCS");
