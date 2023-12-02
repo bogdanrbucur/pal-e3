@@ -6,3 +6,4 @@ export { default as purchaseAllocation } from "./purchaseAllocation.js";
 export { default as getUsers } from "./getUsers.js";
 export { default as getCurrentPRCallocation } from "./getCurrentPRCallocation.js";
 export { default as isPRCallocSuccessful } from "./isPRCallocSuccessful.js";
+export { default as getPRCcycleTemplateIds } from "./getPRCcycleTemplateIds.js";

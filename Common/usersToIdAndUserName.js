@@ -2,7 +2,7 @@
 	 * Transforms an array/string of usernames to a string of Ids to be used in other allocation methods
 	 * @private
 	 * @param {Array<string>} usr String or array of users names: ["Bogdan", "Helen"]
-	 * @return {Promise<{id, username}>} Object with 2 strings: {id: "110531,489954", username: "Bogdan Lazar, Lidia Haile"}
+	 * @return {Promise<{id: string, username: string}>} Object with 2 strings: {id: "110531,489954", username: "Bogdan Lazar, Lidia Haile"}
 	 */
 export default async function usersToIdAndUserName(usr) {
   if (usr === "") return "";

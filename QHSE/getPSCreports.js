@@ -4,7 +4,7 @@ import { dateToString } from "../utils.js";
 
 /**
  * Gets all the PSC reports available in PAL
- * @return {Promise<Array>} Array of objects, each containing an inspection report
+ * @return {Promise<{  Id: number,ReportTypeId: number,ReportType: string,ReportSubTypeId: number,ReportSubType: string,RefNo: string,InspectionDate: string,InspectorName: string,UnitType:string,Unit:string,VesselStatus:string,NoOfDeficiencies:number, NoOfOpenDeficiencie:number, Status:string,Result:string, pscmou:string, ReportStatus:string,StatusDate:string, Port:string}[]>} Array of objects, each containing an inspection report
  */
 export default async function getPSCreports() {
 	console.log("Start POST request for vessels' schedule...");

@@ -4,7 +4,8 @@ import FormData from "form-data";
 /**
  * Gets all the vessels in PAL
  * @param {string} docType "PROC" or "JOB"
- * @return {Promise<Array>} Array of objects, each containing a Purchase category
+ * @return {Promise<{Selected: boolean, Text: string, Value: string}[]>} Array of objects, each containing a Purchase category
+ * @example [{"Selected":false,"Text":"MEDICINE","Value":"201205"},{"Selected":false,"Text":"PROVISIONS","Value":"201184"}]
  */
 export default async function getPurchaseCategories(docType) {
 	if (!["JOB", "PROC"].includes(docType)) throw new Error("Document type unknown! Must be JOB or PROC");

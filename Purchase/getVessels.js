@@ -3,7 +3,7 @@ import FormData from "form-data";
 
 /**
  * Gets all the vessels in PAL
- * @return {Promise<Array>} Array of objects, each containing a vessel
+ * @return {Promise<{Id: number,VesselId: number,VesselObjectId: number,VesselName: string,ApprovalCycleTemplateId: number,ApprovalTemplateId: number,StopProcess: boolean,ModifiedById: number,ModifiedOn: string,IsSelected: boolean,SNo: number}[]>} Array of vessel objects
  */
 export default async function getVessels() {
 	console.log("Start POST request for vessels...");

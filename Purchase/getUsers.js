@@ -3,7 +3,7 @@ import FormData from "form-data";
 
 /**
  * Gets all the Purchase users in PAL
- * @return {Promise<Object[]>} Array of objects, each containing a user
+ * @return {Promise<{UserId: number, LoginName: string, Name: string, Active: boolean, CompanyId: number, Email: string, SelectedUser: boolean, SNo: number}[]>} Array of objects, each containing a user
  */
 export default async function getUsers() {
 	console.log("Start request for users...");
