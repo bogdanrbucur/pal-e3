@@ -1,6 +1,6 @@
 import axios from "axios";
 import FormData from "form-data";
-import { dateToString } from "../utils.js";
+import { dateToString } from "../Common/utils.js";
 
 /**
  * Gets all the PSC reports available in PAL
