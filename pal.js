@@ -1,9 +1,18 @@
 import axios from "axios";
 import FormData from "form-data";
 import puppeteer from "puppeteer";
-import qs from "qs";
 import { getCookie, usersToIdAndUserName, vesselNamesToIds, vesselNamesToObjectIds } from "./Common/index.js";
-import { addCrewAllocation, crewAllocation, getAllocatedUsers, getCrewingProcesses, getCrewingRoles, removeCrewingAllocation } from "./Crewing/index.js";
+import { jsDateToInputString, toInputDate } from "./Common/utils.js";
+import {
+	addCrewAllocation,
+	crewAllocation,
+	getAllocatedUsers,
+	getCrewingProcesses,
+	getCrewingRoles,
+	getPlannedCrewChanges,
+	getSeafarerContacts,
+	removeCrewingAllocation,
+} from "./Crewing/index.js";
 import {
 	categoriesNamesToIds,
 	generalQuery,
@@ -16,8 +25,7 @@ import {
 	purchaseAllocation,
 } from "./Purchase/index.js";
 import { getPSCreports } from "./QHSE/index.js";
-import { getVesselSchedule, getVoyAlertRoles, voyageAlertConfig, imoDcs } from "./Voyage/index.js";
-import { dateToString, jsDateToInputString, stringToDate, toInputDate } from "./Common/utils.js";
+import { getVesselSchedule, getVoyAlertRoles, imoDcs, voyageAlertConfig } from "./Voyage/index.js";
 
 /**
  * Class with all PAL e3 API call methods
@@ -287,7 +295,7 @@ export default class PALAPI {
 	 * @param {number} fid
 	 * @return {Promise<boolean>} success or not
 	 */
-	async removeCrewingAllocation(fid) {
+	removeCrewingAllocation(fid) {
 		return removeCrewingAllocation.call(this, fid);
 	}
 
@@ -299,7 +307,7 @@ export default class PALAPI {
 	 * @param {string | Array<string>} inputUsers Users not in the array will be removed
 	 * @return {Promise<boolean>} success or not
 	 */
-	async crewAllocation(vessel, process, role, inputUsers) {
+	crewAllocation(vessel, process, role, inputUsers) {
 		return crewAllocation.call(this, vessel, process, role, inputUsers);
 	}
 
@@ -307,7 +315,7 @@ export default class PALAPI {
 	 * Gets all the roles in Crewing
 	 * @return {Promise<{Id: number,Code: string,Name: string,RoleLevel: number,Active: boolean,Is_Active: boolean}[]>} Array of objects, each containing a role
 	 */
-	async getCrewingRoles() {
+	getCrewingRoles() {
 		return getCrewingRoles.call(this);
 	}
 
@@ -329,142 +337,20 @@ export default class PALAPI {
 	 * @param {Date} date JS date object. Probably today()
 	 * @param {number} daysAhead how many days to look ahead
 	 * @param {number[]} ranks array of codes representing the ranks 1 - CPT, 31 - C/E
-	 * @return {Promise<Array>} Array of objects, each containing a crew change
+	 * @return {Promise<{vessel: string,rank: string,offName: string,offDueDate: string,plannedRelief: string,onName: string,onPhone: string,onMobile: string,onEmail: string,onSkype:string,onJoinDate:string,port: string,remarks:string,onCrewAgent:string,offCrewAgent:string}[]>} Array of objects, each containing a crew change
 	 */
-	async getPlannedCrewChanges(vessels, date, daysAhead, ranks) {
-		console.time(`Crew planning request`);
-
-		let daysFromNow = date.getDate() + daysAhead;
-
-		// initialize as today and add daysAhead
-		let toDate = new Date();
-		toDate.setDate(daysFromNow);
-
-		let data = {
-			sort: "",
-			page: 1,
-			pageSize: 1000,
-			group: "",
-			filter: "",
-			ownersArray: "",
-			"sdcsArray[]": 1,
-			ownersArray: "",
-			fromDate: dateToString(date),
-			toDate: dateToString(toDate),
-			workGroupArray: "",
-			rankArray: "",
-			vslSubGroupArray: "",
-			vslTypeArray: "",
-			IsReliefDue: "true",
-			Days: 12,
-			ShowFullName: "Y",
-			IsReliefDue: "true",
-			IsMonths: "P",
-			isShowClicked: "true",
-			isShowClickedPageSize: "true",
-			ExcludePlanned: "false",
-			CheckLineUpCandidate: "N",
-			CheckIncludeOnboard: "N",
-			isMISRank: "N",
-			ApprovedPlansOnly: "N",
-			PendingPlansOnly: "N",
-		};
-
-		let vesselObjectIds = await this.vesselNamesToObjectIds(vessels);
-		vesselObjectIds = vesselObjectIds.split(",");
-
-		data = qs.stringify(data);
-
-		// add vessels ObjectIds
-		for (let vessel of vesselObjectIds) {
-			data += `&vesselArray[]=${vessel}&commonVesselArray[]=${vessel}`;
-		}
-
-		// add ranks
-		for (let rank of ranks) {
-			data += `&rankGrpArray[]=${rank}`;
-		}
-
-		let options = {
-			method: "POST",
-			url: `${this.url}/palcrewing/CrewingPAL/Plan/GetCrewListForPlan`,
-			headers: {
-				Accept: "*/*",
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
-				"Content-Type": "application/x-www-form-urlencoded",
-			},
-			data: data,
-		};
-
-		let response = await axios.request(options);
-		console.timeEnd(`Crew planning request`);
-		console.log(`Returned ${response.data.Total} results`);
-
-		const results = response.data.Data;
-
-		// console.log(results);
-
-		let responseArray = [];
-
-		for (const r of results) {
-			// TODO get reliever details based on `RelieverEmpId`
-			const relieverContacts = await this.getSeafarerContacts(r.RelieverEmpId);
-
-			responseArray.push({
-				vessel: r.Vessel,
-				rank: r.Rank,
-				offName: r.Offsigner,
-				offDueDate: r.ReliefDue.slice(0, 11),
-				plannedRelief: r.PlannedRelief,
-				onName: r.Reliever,
-				onPhone: relieverContacts.phone, //
-				onMobile: relieverContacts.mobile, //
-				onEmail: relieverContacts.email, //
-				onSkype: relieverContacts.skype,
-				onJoinDate: r.ExpJoiningDate,
-				port: r.PlannedPort,
-				remarks: r.RelieverRemarks,
-				onCrewAgent: r.CscExt,
-				offCrewAgent: r.oFF_CscExt,
-			});
-		}
-		return responseArray;
+	getPlannedCrewChanges(vessels, date, daysAhead, ranks) {
+		return getPlannedCrewChanges.call(this, vessels, date, daysAhead, ranks);
 	}
 
 	/**
 	 * Gets some seafarer contact details based on employee ID (internal code)
+	 * @private
 	 * @param {number} empId employee ID
-	 * @return {Promise<Object>} Seafarer object with contact details
+	 * @return {Promise<{email:string,phone:string,mobile:string,address:string,skype:string}>} Seafarer object with contact details
 	 */
-	async getSeafarerContacts(empId) {
-		let data = {
-			EmpId: empId,
-			localLang: "N",
-		};
-
-		let options = {
-			method: "POST",
-			url: `${this.url}/palcrewing/CrewingPAL/Address/PopulateData`,
-			headers: {
-				Accept: "*/*",
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57",
-				Cookie: `.BSMAuthCookie=${this.cookie}`,
-				"Content-Type": "application/x-www-form-urlencoded",
-			},
-			data: qs.stringify(data),
-		};
-
-		let response = await axios.request(options);
-		const results = {
-			email: response.data.Email,
-			phone: response.data.PPhone1Code + response.data.PPhone1,
-			mobile: response.data.PMobileCode + response.data.PMobile,
-			address: response.data.PAddress1 + response.data.PCity,
-			skype: response.data.SkypeOrIm,
-		};
-
-		return results;
+	getSeafarerContacts(empId) {
+		return getSeafarerContacts.call(this, empId);
 	}
 
 	/**
@@ -932,3 +818,4 @@ export default class PALAPI {
 }
 
 export * from "./Common/utils.js";
+
