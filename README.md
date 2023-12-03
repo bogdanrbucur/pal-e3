@@ -10,6 +10,28 @@ Since PAL e3 does not offer APIs for programmatically interacting with the backe
 
 `npm install pal-e3`
 
+## Testing using `jest`
+
+### Use ES6 imports
+
+1. Install jest and babel-jest: `npm install --save-dev jest babel-jest`
+2. Install Babel and the Babel Jest plugin: `npm install --save-dev @babel/core @babel/preset-env babel-jest`
+3. Create a `.babelrc` file in the root of the project with the following content:
+
+```js
+{
+  "presets": ["@babel/preset-env"]
+}
+```
+
+4. `npm init jest@latest` to create a `jest.config.js` file
+5. The `collectCoverageFrom` key sets the files to be tested. Add new folders or exclude files as needed.
+
+### Run tests
+
+- `npm test` to run all tests
+- `npm test -- --coverage` to run all tests and generate coverage report
+
 ## Usage
 
 Import the API methods as PALAPI and the data manipulation functions as PAL
@@ -45,7 +67,7 @@ Wrap all the API calls in an `async` function to be able to use `await`. Before 
 
 ```js
 const main = async () => {
- await palapi.getCookie();
+	await palapi.getCookie();
 };
 
 main();
@@ -72,10 +94,10 @@ const myVessels = ["CHEM MIA", "CHEM POLARIS", "CHEM VENUS"];
 const myCategories = ["MEDICINE", "PROVISIONS"];
 
 const main = async () => {
- await palapi.getCookie();
+	await palapi.getCookie();
 
- let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
- console.log(requsitions);
+	let requsitions = await palapi.generalQuery(myVessels, 2023, 1, myCategories);
+	console.log(requsitions);
 };
 
 main();
@@ -94,10 +116,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
- await palapi.getCookie();
+	await palapi.getCookie();
 
- let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
- console.log(allocation); // true if succesful
+	let allocation = await palapi.purchaseAllocation("PROC", "Chem Polaris", "crew welfare", "technical director", ["Bogdan", "roni"]);
+	console.log(allocation); // true if succesful
 };
 
 main();
@@ -116,10 +138,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
- await palapi.getCookie();
+	await palapi.getCookie();
 
- let jobAllocation = await palapi.purchaseAllocation("JOB", "Chem Polaris", "BREAKDOWN", "insurance manager", "", "BREAKDOWN - Normal");
- console.log(jobAllocation); // true if succesful
+	let jobAllocation = await palapi.purchaseAllocation("JOB", "Chem Polaris", "BREAKDOWN", "insurance manager", "", "BREAKDOWN - Normal");
+	console.log(jobAllocation); // true if succesful
 };
 
 main();
@@ -138,10 +160,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
- await palapi.getCookie();
+	await palapi.getCookie();
 
- let voyAlloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
- console.log(voyAlloc); // true if succesful
+	let voyAlloc = await palapi.voyageAlertConfig("chem polaris", "technical supt", ["bogdan", "marius"]);
+	console.log(voyAlloc); // true if succesful
 };
 
 main();
@@ -162,10 +184,10 @@ palapi.user = "user_name";
 palapi.password = "passw0rd";
 
 const main = async () => {
- await palapi.getCookie();
+	await palapi.getCookie();
 
- let crewAlloc = await palapi.crewAllocation("Chem mia", "incidential  expense", "crew - crew manager", ["bogdan", "adrian"]);
- console.log(crewAlloc); // true if succesful or if user already there in the same role
+	let crewAlloc = await palapi.crewAllocation("Chem mia", "incidential  expense", "crew - crew manager", ["bogdan", "adrian"]);
+	console.log(crewAlloc); // true if succesful or if user already there in the same role
 };
 
 main();
@@ -280,14 +302,14 @@ console.log(docs);
 
 // Get the result object
 {
- CreatedBy: "Marine Assistant";
- CreatedOn: "31-Oct-2023 06:51:46";
- DocFolder: "Karlshamn";
- DocNo: "PI-KAR-02";
- DocSite: "All";
- Doctitle: "CDC - Sweden";
- ID: 99990000505971;
- Revision: 3;
+	CreatedBy: "Marine Assistant";
+	CreatedOn: "31-Oct-2023 06:51:46";
+	DocFolder: "Karlshamn";
+	DocNo: "PI-KAR-02";
+	DocSite: "All";
+	Doctitle: "CDC - Sweden";
+	ID: 99990000505971;
+	Revision: 3;
 }
 ```
 
@@ -300,18 +322,18 @@ console.log(crewChange);
 
 // Get the  objects array
 [
- {
-  vessel: "Chem Mia",
-  rank: "C/E",
-  offName: "JOHN DOE",
-  offDueDate: "09-Aug-2023",
-  plannedRelief: "24-Aug-2023",
-  onName: "JANE DOE",
-  port: "Buenaventura",
-  remarks: "Briefing in office / process Schengen visa",
-  onCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
-  offCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
- },
+	{
+		vessel: "Chem Mia",
+		rank: "C/E",
+		offName: "JOHN DOE",
+		offDueDate: "09-Aug-2023",
+		plannedRelief: "24-Aug-2023",
+		onName: "JANE DOE",
+		port: "Buenaventura",
+		remarks: "Briefing in office / process Schengen visa",
+		onCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
+		offCrewAgent: "SOMETHING MARITIME AGENCY, INC.",
+	},
 ];
 ```
 

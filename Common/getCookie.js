@@ -4,7 +4,7 @@ import puppeteer from "puppeteer";
  * Logs in to PAL using provided credentials, retrieves the session cookie and sets the cookie property
  */
 export default async function getCookie() {
-	return new Promise(async (resolve, error) => {
+	return new Promise(async (resolve, reject) => {
 		const browser = await puppeteer.launch({ headless: "new" }); // for running in Node.js
 		// const browser = await puppeteer.launch({ executablePath: "./chromium/chrome.exe", headless: "new" }); // for .exe packages
 		const page = await browser.newPage();
@@ -45,7 +45,8 @@ export default async function getCookie() {
 			resolve(cookie);
 		} else {
 			console.error("Received invalid cookie! Check the login credentials");
-			throw new Error("Received invalid cookie! Check the login credentials");
+			reject("Received invalid cookie! Check the login credentials");
+			await browser.close();
 		}
 	});
 }
