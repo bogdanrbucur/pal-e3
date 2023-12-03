@@ -1,5 +1,4 @@
 import usersToIdAndUserName from "./usersToIdAndUserName";
-import getCookie from "./getCookie";
 
 // before running the entire test suite
 beforeAll(async () => {
