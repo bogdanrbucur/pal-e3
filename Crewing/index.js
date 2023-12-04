@@ -6,3 +6,4 @@ export { default as crewAllocation } from "./crewAllocation.js";
 export { default as getCrewingRoles } from "./getCrewingRoles.js";
 export { default as getPlannedCrewChanges } from "./getPlannedCrewChanges.js";
 export { default as getSeafarerContacts } from "./getSeafarerContacts.js";
+export { default as getCrewlist } from "./getCrewlist.js";
