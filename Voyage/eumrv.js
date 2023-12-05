@@ -111,7 +111,7 @@ export default async function eumrv(vesselName, date, runFromPrevYear = false) {
 		// Check every 3 sec. if it still says "No items to display" at the bottom. If not, move on, means the data is loaded
 		//
 		let t = 0;
-		let timeout = 40; // 3000 ms * 40 = 120 sec. waiting for something to display
+		let timeout = 60; // 3000 ms * 60 = 180 sec. waiting for something to display
 		while (results == "No items to display" && t < timeout) {
 			await new Promise((r) => setTimeout(r, 3000));
 			element = await page.$("#grdResult > div.k-pager-wrap.k-grid-pager.k-widget > span.k-pager-info.k-label");
