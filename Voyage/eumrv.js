@@ -12,6 +12,10 @@ import { jsDateToInputString, toInputDate } from "../Common/utils.js";
  */
 export default async function eumrv(vesselName, date, runFromPrevYear = false) {
 	console.time("EU MRV");
+
+	// Substract 2 days from date to ensure that the EU MRV data is available
+	date.setDate(date.getDate() - 2);
+
 	return new Promise(async (resolve, error) => {
 		// check argument validity
 		if (typeof date !== "object") throw new Error("Invalid date argument. Only JavaScript Date objects are accepted.");
