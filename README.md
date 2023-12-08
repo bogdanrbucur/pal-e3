@@ -345,7 +345,8 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.7.1
+### Release notes 1.7.3
 
 - Reorganize the API methods into categories and extract each method into its own file.
 - Increase waiting for EU MRV and IMO DCS to 3 min.
+- Implement dataFromDate and dataToDate in EU MRV
