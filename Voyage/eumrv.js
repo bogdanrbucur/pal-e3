@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { jsDateToInputString, toInputDate, stringToDate } from "../Common/utils.js";
+import { jsDateToInputString, toInputDate, stringToDate, inputStringToOutputString } from "../Common/utils.js";
 
 // TODO leg object type
 /**
@@ -182,12 +182,12 @@ export default async function eumrv(vesselName, date, runFromPrevYear = false) {
 					// dataFromDate is the date of departure or the startDate, whichever is later
 					var dataFromDate = depTime;
 					if (stringToDate(dataFromDate) < stringToDate(startDate)) {
-						dataFromDate = startDate;
+						dataFromDate = inputStringToOutputString(startDate);
 					}
 					// dataToDate is the date of arrival or the date of the report, whichever is earlier
 					var dataToDate = arrTime;
 					if (stringToDate(dataToDate) > stringToDate(reportDate)) {
-						dataToDate = reportDate;
+						dataToDate = inputStringToOutputString(reportDate);
 					}
 					var seaHFOcons = await page.evaluate((el) => el.textContent, seaHFOconsElement);
 					seaHFOcons = seaHFOcons.replaceAll(",", "");
@@ -301,16 +301,13 @@ export default async function eumrv(vesselName, date, runFromPrevYear = false) {
 				}
 			}
 
-			// convert to DDMMYYYY
-			dataToDate = toInputDate(dataToDate);
-
 			console.timeEnd("EU MRV");
 			await browser.close();
 
 			const response = {
 				vessel: vesselName,
-				startDate: `${dataFromDate.slice(0, -6)}.${dataFromDate.slice(2, -4)}.${dataFromDate.slice(4)}`,
-				endDate: `${dataToDate.slice(0, -6)}.${dataToDate.slice(2, -4)}.${dataToDate.slice(4)}`,
+				startDate: dataFromDate.slice(0, 11),
+				endDate: dataToDate.slice(0, 11),
 				legs,
 			};
 			resolve(response);

@@ -162,3 +162,13 @@ export function todayDDMMYYYY() {
 export function jsDateToInputString(input) {
 	return `${String(input.getDate(input)).padStart(2, "0")}${String(input.getMonth(input) + 1).padStart(2, "0")}${input.getFullYear()}`;
 }
+
+/**
+ * Transform date from DDMMYYYY to DD-MMM-YYYY 07:00
+ * @param {string} input String in format DDMMYYYY
+ * @return {string} String in format DD-MMM-YYYY 07:00
+ */
+export function inputStringToOutputString(input) {
+	let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	return `${input.slice(0, 2)}-${months[input.slice(2, 4) - 1]}-${input.slice(4, 8)} 07:00`;
+}
