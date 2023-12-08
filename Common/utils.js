@@ -21,8 +21,8 @@ export function stringToDate(input) {
 		let day = input.slice(0, 2);
 		return new Date(year, month, day);
 	}
-	if (input.length !== 11) {
-		console.log(`stringToDate bad input! Accepts only DD-MMM-YYYY or DDMMYYYY`);
+	if (input.length !== 11 && input.length !== 17) {
+		console.error(`stringToDate bad input! Accepts only DD-MMM-YYYY or DDMMYYYY or DD-MMM-YYYY HH:mm`);
 		return new Date(0);
 	}
 	return new Date(`${input.slice(7, 11)}, ${input.slice(3, 6)}, ${input.slice(0, 2)}`);

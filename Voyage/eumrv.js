@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { jsDateToInputString, toInputDate } from "../Common/utils.js";
+import { jsDateToInputString, toInputDate, stringToDate } from "../Common/utils.js";
 
 // TODO leg object type
 /**
@@ -179,8 +179,16 @@ export default async function eumrv(vesselName, date, runFromPrevYear = false) {
 					var arrPort = await page.evaluate((el) => el.textContent, arrPortElement);
 					var arrCountry = await page.evaluate((el) => el.textContent, arrCountryElement);
 					var arrTime = await page.evaluate((el) => el.textContent, arrTimeElement);
-					// DALL will keep arrival date of last leg
-					var DALL = arrTime;
+					// dataFromDate is the date of departure or the startDate, whichever is later
+					var dataFromDate = depTime;
+					if (stringToDate(dataFromDate) < stringToDate(startDate)) {
+						dataFromDate = startDate;
+					}
+					// dataToDate is the date of arrival or the date of the report, whichever is earlier
+					var dataToDate = arrTime;
+					if (stringToDate(dataToDate) > stringToDate(reportDate)) {
+						dataToDate = reportDate;
+					}
 					var seaHFOcons = await page.evaluate((el) => el.textContent, seaHFOconsElement);
 					seaHFOcons = seaHFOcons.replaceAll(",", "");
 					seaHFOcons = Number(seaHFOcons);
@@ -257,6 +265,8 @@ export default async function eumrv(vesselName, date, runFromPrevYear = false) {
 					// push the leg to legs array
 					legs.push({
 						voyageLeg,
+						dataFromDate,
+						dataToDate,
 						depPort,
 						depCountry,
 						depTime,
@@ -292,15 +302,15 @@ export default async function eumrv(vesselName, date, runFromPrevYear = false) {
 			}
 
 			// convert to DDMMYYYY
-			DALL = toInputDate(DALL);
+			dataToDate = toInputDate(dataToDate);
 
 			console.timeEnd("EU MRV");
 			await browser.close();
 
 			const response = {
 				vessel: vesselName,
-				startDate: `${startDate.slice(0, -6)}.${startDate.slice(2, -4)}.${startDate.slice(4)}`,
-				endDate: `${DALL.slice(0, -6)}.${DALL.slice(2, -4)}.${DALL.slice(4)}`,
+				startDate: `${dataFromDate.slice(0, -6)}.${dataFromDate.slice(2, -4)}.${dataFromDate.slice(4)}`,
+				endDate: `${dataToDate.slice(0, -6)}.${dataToDate.slice(2, -4)}.${dataToDate.slice(4)}`,
 				legs,
 			};
 			resolve(response);
