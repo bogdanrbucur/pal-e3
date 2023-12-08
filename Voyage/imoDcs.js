@@ -12,9 +12,6 @@ import { jsDateToInputString, stringToDate, toInputDate } from "../Common/utils.
 export default async function imoDcs(vesselName, date, runFromPrevYear = false) {
 	console.time("IMO DCS");
 
-	// Substract 2 days from date to ensure that the IMO DCS data is available
-	date.setDate(date.getDate() - 2);
-
 	return new Promise(async (resolve, error) => {
 		// check argument validity
 		if (typeof date !== "object") throw new Error("Invalid date argument. Only JavaScript Date objects are accepted.");
