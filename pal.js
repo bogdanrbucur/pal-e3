@@ -5,6 +5,7 @@ import {
 	getAllocatedUsers,
 	getCrewingProcesses,
 	getCrewingRoles,
+	getCrewlist,
 	getPlannedCrewChanges,
 	getSeafarerContacts,
 	removeCrewingAllocation,
@@ -295,6 +296,17 @@ export default class PALAPI {
 	 */
 	removeCrewingAllocation(fid) {
 		return removeCrewingAllocation.call(this, fid);
+	}
+
+	/**
+	 * Retrieve the crew list for a vessel if provided, or all vessels if not. From and to dates are optional.
+	 * @param {string} vesselName
+	 * @param {Date} fromDate
+	 * @param {Date} toDate
+	 * @return {Promise<{Id:number,VslName:string,EmpId:number,EmpNo:string,FullName:string,Nationality:string}[]>} Array of objects, each containing a seafarer
+	 */
+	getCrewlist(vesselName, fromDate, toDate) {
+		return getCrewlist.call(this, vesselName, fromDate, toDate);
 	}
 
 	/**

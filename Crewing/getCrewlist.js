@@ -1,11 +1,13 @@
-import axios from "axios";
-import FormData from "form-data";
+import { dateToString } from "../Common/utils.js";
 
 /**
- * Get the crew list for a vessel if provided, or all vessels if not
+ * Retrieve the crew list for a vessel if provided, or all vessels if not. From and to dates are optional.
+ * @param {string} vesselName
+ * @param {Date} fromDate
+ * @param {Date} toDate
  * @return {Promise<{Id:number,VslName:string,EmpId:number,EmpNo:string,FullName:string,Nationality:string}[]>} Array of objects, each containing a seafarer
  */
-export default async function getCrewlist(vesselName) {
+export default async function getCrewlist(vesselName, fromDate, toDate) {
 	console.log("Start Crewlist request...");
 	console.time("Crewlist request");
 
@@ -18,6 +20,15 @@ export default async function getCrewlist(vesselName) {
 		for (let vessel of vessels) {
 			vesselsIds.push(vessel.VesselId);
 		}
+	}
+
+	let from = "";
+	let to = "";
+	let isListForPeriod = "false";
+	if (fromDate && toDate) {
+		from = dateToString(fromDate);
+		to = dateToString(toDate);
+		isListForPeriod = "true";
 	}
 
 	// build the Form body
@@ -66,10 +77,14 @@ export default async function getCrewlist(vesselName) {
 	bodyFormData.append("otherOption", "A");
 	bodyFormData.append("reliefDue", 0);
 	bodyFormData.append("isHighlightExp", "false");
+	bodyFormData.append("isListForPeriod", isListForPeriod);
+	bodyFormData.append("fromDate", from);
+	bodyFormData.append("toDate", to);
+	bodyFormData.append("MyVessel", "N");
+	bodyFormData.append("extra", "false");
+	bodyFormData.append("reportingnationalityGroupArray", "");
 
-  // TODO continue
-
-	const response = await fetch(`${this.url}/palqdms/QDMS/DocumentLibrary/DocumentList_Read`, {
+	const response = await fetch(`${this.url}/palcrewing/CrewingPAL/CrewList/GetCrewList`, {
 		method: "POST",
 		headers: { Cookie: `.BSMAuthCookie=${this.cookie}` },
 		body: bodyFormData,
@@ -78,5 +93,5 @@ export default async function getCrewlist(vesselName) {
 	const body = await response.json();
 	if (body.Errors) throw new Error(body.Errors);
 
-	return body;
+	return body.Data;
 }

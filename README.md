@@ -337,6 +337,34 @@ console.log(crewChange);
 ];
 ```
 
+#### Getting one or all vessel's crewlist
+
+```js
+// get the current crewlist for given vessel
+const crewlist = await palapi.getCrewlist("chem mia");
+console.log(crewlist);
+
+// Get the  objects array
+[
+	{
+		Id: 11164,
+		VesselId: 304392,
+		VslName: "Chem Mia",
+		EmpId: 2065009,
+		EmpNo: "18985",
+		onName: "JANE DOE",
+		Nationality: "INDIAN",
+		SignOnDate: "12-Nov-2022",
+		ReliefDate: "09-Mar-2023",
+	},
+  ...
+];
+
+// get the crewlist for all vessels at given date
+const crewlist = await palapi.getCrewlist("", new Date("2022-11-12"), new Date("2022-11-12"));
+console.log(crewlist);
+```
+
 ### Accessing all available API methods and data manipulation functions
 
 All available PAL API call methods are available on the `palapi` object using IntelliSense:
@@ -345,8 +373,6 @@ All available PAL API call methods are available on the `palapi` object using In
 All available data manipulation functions can be accessed from the `PAL` object using IntelliSense:
 ![ss2](https://imgur.com/pKDcXcd.png)
 
-### Release notes 1.7.3
+### Release notes 1.7.5
 
-- Reorganize the API methods into categories and extract each method into its own file.
-- Increase waiting for EU MRV and IMO DCS to 3 min.
-- Implement dataFromDate and dataToDate in EU MRV
+- implement `getCrewlist()` method
